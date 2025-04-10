@@ -26,12 +26,11 @@
     "debug:env": "node scripts/debug-env.js",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "openapi:generate": "npm run start:dev -- --entryFile=main.ts",
-    "openapi:angular": "rimraf ./sdk/angular && npx @openapitools/openapi-generator-cli generate -i ./src/openapi/swagger.json -g typescript-angular -o ./sdk/angular -c ./src/openapi/openapi-generator-config.json",
-    "openapi:react": "rimraf ./sdk/react && npx openapi-typescript-codegen --input ./src/openapi/swagger.json --output ./sdk/react --client axios --name SunestApi",
-    "openapi:typescript": "rimraf ./sdk/typescript && npx swagger-typescript-api -p ./src/openapi/swagger.json -o ./sdk/typescript -n api.ts --axios",
-    "openapi:flutter": "rimraf ./sdk/flutter && mkdir -p ./sdk/flutter && npx @openapitools/openapi-generator-cli generate -i ./src/openapi/swagger.json -g dart-dio -o ./sdk/flutter",
-    "generate:all-sdks": "npm run openapi:generate && npm run openapi:angular && npm run openapi:react && npm run openapi:typescript && npm run openapi:flutter"
+    "openapi:angular": "rimraf ./sdk/angular && npx @openapitools/openapi-generator-cli generate -i ./openapi/swagger.json -g typescript-angular -o ./sdk/angular -c ./openapi/openapi-generator-config.json",
+    "openapi:react": "rimraf ./sdk/react && npx openapi-typescript-codegen --input ./openapi/swagger.json --output ./sdk/react --client axios --name SunestApi",
+    "openapi:typescript": "rimraf ./sdk/typescript && npx swagger-typescript-api generate -p ./openapi/swagger.json -o ./sdk/typescript -n api.ts --axios",
+    "openapi:flutter": "rimraf ./sdk/flutter && mkdir -p ./sdk/flutter && npx @openapitools/openapi-generator-cli generate -i ./openapi/swagger.json -g dart-dio -o ./sdk/flutter",
+    "generate:all-sdks": "npm run openapi:angular && npm run openapi:react && npm run openapi:typescript && npm run openapi:flutter"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",

@@ -713,7 +713,4 @@ The current implementation supports avatar URLs. Future enhancements could inclu
 
 ## License
 
-[MIT License](LICENSE)# sunest
-# sunest
-#   s u n e s t  
- # sunest
+[MIT License](LICENSE)

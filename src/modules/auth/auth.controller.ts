@@ -11,7 +11,8 @@ import {
   Res,
   Render,
   BadRequestException,
-  Redirect
+  Redirect,
+  NotFoundException
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from '../../common/guards/local-auth.guard';
@@ -24,6 +25,16 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UsersService } from '../users/users.service';
 import { Response } from 'express';
+import { 
+  LoginResponseDto, 
+  RefreshTokenResponseDto, 
+  RegisterResponseDto, 
+  SuccessResponseDto, 
+  ProfileResponseDto,
+  VerifyEmailResponseDto,
+  ForgotPasswordResponseDto,
+  ResetPasswordResponseDto
+} from './dto/auth-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -36,15 +47,15 @@ export class AuthController {
   @Post('login')
   @UseGuards(LocalAuthGuard)
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({ status: 200, description: 'Returns JWT tokens' })
-  async login(@Body() loginDto: LoginDto, @Req() req) {
+  @ApiResponse({ status: 200, description: 'Returns JWT tokens', type: LoginResponseDto })
+  async login(@Body() loginDto: LoginDto, @Req() req): Promise<LoginResponseDto> {
     return this.authService.login(req.user);
   }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User created successfully' })
-  async register(@Body() registerDto: RegisterDto) {
+  @ApiResponse({ status: 201, description: 'User created successfully', type: RegisterResponseDto })
+  async register(@Body() registerDto: RegisterDto): Promise<RegisterResponseDto> {
     return this.authService.register(
       registerDto.email,
       registerDto.password,
@@ -55,8 +66,8 @@ export class AuthController {
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh an access token using a refresh token' })
-  @ApiResponse({ status: 200, description: 'Returns a new access token' })
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+  @ApiResponse({ status: 200, description: 'Returns a new access token', type: RefreshTokenResponseDto })
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto> {
     return this.authService.refreshToken(
       refreshTokenDto.userId,
       refreshTokenDto.refreshToken,
@@ -67,8 +78,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout the current user' })
-  @ApiResponse({ status: 200, description: 'Logout successful' })
-  async logout(@Req() req) {
+  @ApiResponse({ status: 200, description: 'Logout successful', type: SuccessResponseDto })
+  async logout(@Req() req): Promise<SuccessResponseDto> {
     return this.authService.logout(req.user.userId);
   }
 
@@ -76,34 +87,46 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get the current user profile' })
-  @ApiResponse({ status: 200, description: 'Returns user profile' })
-  async getProfile(@Req() req) {
+  @ApiResponse({ status: 200, description: 'Returns user profile', type: ProfileResponseDto })
+  async getProfile(@Req() req): Promise<ProfileResponseDto> {
     const user = await this.usersService.findById(req.user.userId);
-    return user;
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+   
+    // Create the profile response with address info if available
+    const profileResponseDto = new ProfileResponseDto({
+      ...user,
+    });
+
+  
+    return profileResponseDto;
+
   }
 
   @Get('verify-email')
   @ApiOperation({ summary: 'Verify user email address' })
-  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiResponse({ status: 200, description: 'Email verified successfully', type: VerifyEmailResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid verification token' })
-  async verifyEmail(@Query('token') token: string) {
+  async verifyEmail(@Query('token') token: string): Promise<VerifyEmailResponseDto> {
     return this.authService.verifyEmail(token);
   }
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request a password reset' })
-  @ApiResponse({ status: 200, description: 'Password reset email sent' })
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+  @ApiResponse({ status: 200, description: 'Password reset email sent', type: ForgotPasswordResponseDto })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<ForgotPasswordResponseDto> {
     return this.authService.forgotPassword(forgotPasswordDto.email);
   }
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password using token' })
-  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  @ApiResponse({ status: 200, description: 'Password reset successful', type: ResetPasswordResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<ResetPasswordResponseDto> {
     return this.authService.resetPassword(
       resetPasswordDto.token,
       resetPasswordDto.password

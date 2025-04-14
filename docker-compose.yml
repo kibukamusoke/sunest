@@ -5,12 +5,13 @@ services:
     container_name: sunest-app
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     volumes:
       - .:/app
       - /app/node_modules
     ports:
       - "3000:3000"
+      - "5555:5555"
     depends_on:
       - postgres
     environment:

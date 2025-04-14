@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, NotFoundException, BadRequestExcepti
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { NotificationService } from '../notifications/notification.service';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -58,6 +58,7 @@ export class AuthService {
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
+      userId: user.id,
     };
   }
 

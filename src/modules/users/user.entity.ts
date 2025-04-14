@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
 import { File } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { FileDto } from '../storage/dto/file.dto';
 
 export class User {
   @ApiProperty({ description: 'User ID', example: '550e8400-e29b-41d4-a716-446655440000' })
@@ -45,7 +46,10 @@ export class User {
   @ApiProperty({ description: 'User roles', type: [String], example: ['user'] })
   roles: string[];
   
-  @ApiPropertyOptional({ description: 'Files owned by user', type: [File] })
+  @ApiPropertyOptional({ 
+  description: 'Files owned by user',
+  type: [FileDto]
+})
   files?: File[];
   
   @ApiProperty({ description: 'Account creation date' })

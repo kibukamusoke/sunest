@@ -9,14 +9,16 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './config/prisma.service';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-
+import { CustomValidationPipe } from './pipes/custom-validation.pipe';
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 async function bootstrap() {
   console.log('Starting application bootstrap...');
   try {
     console.log('Creating NestJS application instance...');
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-      logger: false
+      logger: ['error', 'warn', 'log', 'debug', 'verbose', 'fatal']
     });
+    
     console.log('Application instance created successfully.');
     
     console.log('Getting ConfigService...');
@@ -25,6 +27,9 @@ async function bootstrap() {
     console.log('Getting PrismaService...');
     const prismaService = app.get(PrismaService);
     console.log('Services retrieved successfully.');
+
+    // Apply global exception filter for stack traces
+    app.useGlobalFilters(new AllExceptionsFilter());
   
   // Enable graceful shutdown
   prismaService.enableShutdownHooks();
@@ -34,13 +39,15 @@ async function bootstrap() {
   app.setViewEngine('hbs');
   
   // Apply global pipes
-  app.useGlobalPipes(
+  /*app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false,
     }),
-  );
+  ); */
+
+  app.useGlobalPipes(new CustomValidationPipe());
   
   // Security
   app.use(
@@ -57,7 +64,12 @@ async function bootstrap() {
       },
     }),
   );
-  app.enableCors();
+  app.enableCors({
+    origin: ['https://preview--tree2u-fruit-find.lovable.app', 'https://tree2u-fruit-find.lovable.app', 'http://localhost:8080', '*'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    allowedHeaders: 'Content-Type,Accept,Authorization',
+  });
   
   // Set global prefix for API routes
   app.setGlobalPrefix('api', { exclude: ['reset-password'] });
@@ -68,7 +80,7 @@ async function bootstrap() {
     .setDescription('Modern NestJS API with comprehensive features')
     .setVersion('1.0')
     .addServer('http://localhost:3000', 'Local Development')
-    .addServer('https://api.example.com', 'Production')
+    .addServer('https://tree2u.kobotogether.com', 'Production')
     .addBearerAuth({
       type: 'http',
       scheme: 'bearer',
@@ -88,7 +100,7 @@ async function bootstrap() {
   // Write the OpenAPI JSON to file for SDK generation
   const fs = require('fs');
   const path = require('path');
-  const openapiDir = path.resolve(process.cwd(), 'src/openapi');
+  const openapiDir = path.resolve(process.cwd(), 'openapi');
   if (!fs.existsSync(openapiDir)) {
     fs.mkdirSync(openapiDir, { recursive: true });
     console.log(`Created directory: ${openapiDir}`);

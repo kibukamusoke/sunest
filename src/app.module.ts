@@ -21,8 +21,30 @@ import { LoggerModule } from 'nestjs-pino';
         transport: {
           target: 'pino-pretty',
           options: {
-            singleLine: true,
+            singleLine: false,
           },
+        },
+        serializers: {
+          req: (req) => {
+            return {
+              id: req.id,
+              method: req.method,
+              url: req.url,
+              query: req.query,
+              params: req.params,
+              //headers: req.headers,
+              body: req.raw.body, // Log request body
+              remoteAddress: req.remoteAddress,
+              remotePort: req.remotePort
+            };
+          },
+          res: (res) => {
+            return {
+              statusCode: res.statusCode,
+              //headers: res.headers,
+              body: res.raw.locals?.body, // Log response body
+            };
+          }
         },
       },
     }),

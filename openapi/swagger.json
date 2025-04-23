@@ -109,7 +109,14 @@
         },
         "responses": {
           "200": {
-            "description": "Returns JWT tokens"
+            "description": "Returns JWT tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Login with email and password",
@@ -134,7 +141,14 @@
         },
         "responses": {
           "201": {
-            "description": "User created successfully"
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Register a new user",
@@ -159,7 +173,14 @@
         },
         "responses": {
           "200": {
-            "description": "Returns a new access token"
+            "description": "Returns a new access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshTokenResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Refresh an access token using a refresh token",
@@ -174,7 +195,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Logout successful"
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -194,7 +222,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Returns user profile"
+            "description": "Returns user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -223,7 +258,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Email verified successfully"
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid verification token"
@@ -251,7 +293,14 @@
         },
         "responses": {
           "200": {
-            "description": "Password reset email sent"
+            "description": "Password reset email sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgotPasswordResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Request a password reset",
@@ -276,7 +325,14 @@
         },
         "responses": {
           "200": {
-            "description": "Password reset successful"
+            "description": "Password reset successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid or expired token"
@@ -478,7 +534,7 @@
       "description": "Local Development"
     },
     {
-      "url": "https://api.example.com",
+      "url": "https://tree2u.kobotogether.com",
       "description": "Production"
     }
   ],
@@ -494,9 +550,80 @@
       }
     },
     "schemas": {
-      "File": {
+      "FileDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "File ID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "key": {
+            "type": "string",
+            "description": "File storage key/path",
+            "example": "user-files/document.pdf"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Original filename",
+            "example": "document.pdf"
+          },
+          "mimetype": {
+            "type": "string",
+            "description": "File MIME type",
+            "example": "application/pdf"
+          },
+          "size": {
+            "type": "number",
+            "description": "File size in bytes",
+            "example": 1048576
+          },
+          "bucket": {
+            "type": "string",
+            "description": "Storage bucket name",
+            "example": "my-app-files"
+          },
+          "uploadedBy": {
+            "type": "string",
+            "description": "User ID who uploaded the file",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID who owns the file",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "status": {
+            "type": "string",
+            "description": "File status",
+            "enum": [
+              "PENDING",
+              "UPLOADED",
+              "FAILED"
+            ],
+            "example": "UPLOADED"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "File creation date"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "File last update date"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "filename",
+          "mimetype",
+          "bucket",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "User": {
         "type": "object",
@@ -555,7 +682,7 @@
             "description": "Files owned by user",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/File"
+              "$ref": "#/components/schemas/FileDto"
             }
           },
           "createdAt": {
@@ -609,6 +736,28 @@
           "password"
         ]
       },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT access token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "JWT refresh token"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "userId"
+        ]
+      },
       "RegisterDto": {
         "type": "object",
         "properties": {
@@ -631,6 +780,87 @@
           "password"
         ]
       },
+      "RegisterResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User ID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "email": {
+            "type": "string",
+            "description": "User email address",
+            "example": "user@example.com"
+          },
+          "displayName": {
+            "type": "object",
+            "description": "User display name",
+            "example": "John Doe"
+          },
+          "avatar": {
+            "type": "object",
+            "description": "URL to user avatar image",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether user account is active",
+            "default": true
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "description": "Whether user email is verified",
+            "default": false
+          },
+          "provider": {
+            "type": "object",
+            "description": "Authentication provider (local, google, github)",
+            "example": "local"
+          },
+          "providerId": {
+            "type": "object",
+            "description": "ID from auth provider",
+            "example": "123456789"
+          },
+          "roles": {
+            "description": "User roles",
+            "example": [
+              "user"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "files": {
+            "description": "Files owned by user",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Account creation date"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Account last updated date"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "isActive",
+          "emailVerified",
+          "roles",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "RefreshTokenDto": {
         "type": "object",
         "properties": {
@@ -646,6 +876,135 @@
           "refreshToken"
         ]
       },
+      "RefreshTokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT access token"
+          }
+        },
+        "required": [
+          "access_token"
+        ]
+      },
+      "SuccessResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "ProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User ID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "email": {
+            "type": "string",
+            "description": "User email address",
+            "example": "user@example.com"
+          },
+          "displayName": {
+            "type": "object",
+            "description": "User display name",
+            "example": "John Doe"
+          },
+          "avatar": {
+            "type": "object",
+            "description": "URL to user avatar image",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether user account is active",
+            "default": true
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "description": "Whether user email is verified",
+            "default": false
+          },
+          "provider": {
+            "type": "object",
+            "description": "Authentication provider (local, google, github)",
+            "example": "local"
+          },
+          "providerId": {
+            "type": "object",
+            "description": "ID from auth provider",
+            "example": "123456789"
+          },
+          "roles": {
+            "description": "User roles",
+            "example": [
+              "user"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "files": {
+            "description": "Files owned by user",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Account creation date"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Account last updated date"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "isActive",
+          "emailVerified",
+          "roles",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "VerifyEmailResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
       "ForgotPasswordDto": {
         "type": "object",
         "properties": {
@@ -655,6 +1014,24 @@
         },
         "required": [
           "email"
+        ]
+      },
+      "ForgotPasswordResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": [
+          "success"
         ]
       },
       "ResetPasswordDto": {
@@ -670,6 +1047,24 @@
         "required": [
           "token",
           "password"
+        ]
+      },
+      "ResetPasswordResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": [
+          "success"
         ]
       },
       "CreatePresignedUrlDto": {

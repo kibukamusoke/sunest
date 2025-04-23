@@ -1,8 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { User } from '../../users/user.entity';
-import { ShippingAddressResponseDto } from '../../users/dto/shipping-address.dto';
-import { ShippingAddress } from '@prisma/client';
 
 export class LoginResponseDto {
   @ApiProperty({ description: 'JWT access token' })
@@ -32,18 +30,18 @@ export class SuccessResponseDto {
 
 
 export class ProfileResponseDto extends User {
-  @ApiPropertyOptional({ description: 'Primary shipping address' })
-  shippingAddresses?: ShippingAddress[];
+  //@ApiPropertyOptional({ description: 'Primary shipping address' })
+  //shippingAddresses?: ShippingAddress[];
   constructor(partial: Partial<ProfileResponseDto>) {
     super(partial);
   }
   
-  setShippingAddresses(shippingAddresses: ShippingAddress[]) {
-    this.shippingAddresses = shippingAddresses;
-  }
-  getShippingAddresses() {
-    return this.shippingAddresses;
-  }
+  //setShippingAddresses(shippingAddresses: ShippingAddress[]) {
+  //  this.shippingAddresses = shippingAddresses;
+  //}
+  //getShippingAddresses() {
+  //  return this.shippingAddresses;
+  //}
 }
 
 export class VerifyEmailResponseDto extends SuccessResponseDto {}

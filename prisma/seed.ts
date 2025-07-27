@@ -6,6 +6,45 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
+  // Create default apps
+  const portainerApp = await prisma.app.upsert({
+    where: { name: 'portainer' },
+    update: {},
+    create: {
+      name: 'portainer',
+      displayName: 'Portainer Manager',
+      description: 'Docker container management application',
+      domain: 'portainer.example.com',
+      isActive: true,
+    },
+  });
+
+  const dockerApp = await prisma.app.upsert({
+    where: { name: 'docker-manager' },
+    update: {},
+    create: {
+      name: 'docker-manager',
+      displayName: 'Docker Manager',
+      description: 'Advanced Docker management platform',
+      domain: 'docker.example.com',
+      isActive: true,
+    },
+  });
+
+  const testApp = await prisma.app.upsert({
+    where: { name: 'test-app' },
+    update: {},
+    create: {
+      name: 'test-app',
+      displayName: 'Test Application',
+      description: 'Development and testing environment',
+      domain: 'test.example.com',
+      isActive: true,
+    },
+  });
+
+  console.log('Created apps:', { portainerApp, dockerApp, testApp });
+
   // Create roles
   const adminRole = await prisma.role.upsert({
     where: { name: 'admin' },
@@ -84,25 +123,123 @@ async function main() {
 
   console.log('Assigned permissions to roles');
 
-  // Create admin user
+  // Create admin users for each app
   const hashedPassword = await bcrypt.hash('admin123', 10);
-  
-  const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
+
+  const portainerAdmin = await prisma.user.upsert({
+    where: {
+      email_appId: {
+        email: 'admin@portainer.com',
+        appId: portainerApp.id,
+      }
+    },
     update: {},
     create: {
-      email: 'admin@example.com',
+      email: 'admin@portainer.com',
       password: hashedPassword,
-      displayName: 'Admin User',
+      displayName: 'Portainer Admin',
       isActive: true,
       emailVerified: true,
+      appId: portainerApp.id,
       roles: {
         connect: [{ id: adminRole.id }],
       },
     },
   });
 
-  console.log('Created admin user:', adminUser);
+  const dockerAdmin = await prisma.user.upsert({
+    where: {
+      email_appId: {
+        email: 'admin@docker.com',
+        appId: dockerApp.id,
+      }
+    },
+    update: {},
+    create: {
+      email: 'admin@docker.com',
+      password: hashedPassword,
+      displayName: 'Docker Admin',
+      isActive: true,
+      emailVerified: true,
+      appId: dockerApp.id,
+      roles: {
+        connect: [{ id: adminRole.id }],
+      },
+    },
+  });
+
+  // Create a super admin that can access all apps (for the admin portal)
+  const superAdmin = await prisma.user.upsert({
+    where: {
+      email_appId: {
+        email: 'super@admin.com',
+        appId: portainerApp.id, // Default to portainer app
+      }
+    },
+    update: {},
+    create: {
+      email: 'super@admin.com',
+      password: hashedPassword,
+      displayName: 'Super Admin',
+      isActive: true,
+      emailVerified: true,
+      appId: portainerApp.id,
+      roles: {
+        connect: [{ id: adminRole.id }],
+      },
+    },
+  });
+
+  // Create same email user for different apps (to demonstrate multi-tenancy)
+  const portainerUser = await prisma.user.upsert({
+    where: {
+      email_appId: {
+        email: 'user@example.com',
+        appId: portainerApp.id,
+      }
+    },
+    update: {},
+    create: {
+      email: 'user@example.com',
+      password: hashedPassword,
+      displayName: 'Portainer User',
+      isActive: true,
+      emailVerified: true,
+      appId: portainerApp.id,
+      roles: {
+        connect: [{ id: userRole.id }],
+      },
+    },
+  });
+
+  const dockerUser = await prisma.user.upsert({
+    where: {
+      email_appId: {
+        email: 'user@example.com',
+        appId: dockerApp.id,
+      }
+    },
+    update: {},
+    create: {
+      email: 'user@example.com',
+      password: hashedPassword,
+      displayName: 'Docker User',
+      isActive: true,
+      emailVerified: true,
+      appId: dockerApp.id,
+      roles: {
+        connect: [{ id: userRole.id }],
+      },
+    },
+  });
+
+  console.log('Created users:', {
+    portainerAdmin,
+    dockerAdmin,
+    superAdmin,
+    portainerUser,
+    dockerUser
+  });
 
   console.log('Database seeding completed!');
 }

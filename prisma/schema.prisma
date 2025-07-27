@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
 }
 
@@ -11,62 +11,219 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model App {
+  id          String   @id @default(uuid())
+  name        String   @unique // App name (e.g., "Portainer", "DockerManager")
+  displayName String // Human readable name
+  description String?
+  domain      String? // Optional domain for app
+  isActive    Boolean  @default(true)
+  settings    Json? // App-specific settings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users             User[]
+  devices           Device[]
+  subscriptions     Subscription[]
+  subscriptionPlans SubscriptionPlan[]
+  customers         Customer[]
+
+  @@map("apps")
+}
+
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  password        String?
-  displayName     String?
-  avatar          String?   // URL to avatar image
-  isActive        Boolean   @default(true)
-  emailVerified   Boolean   @default(false)
-  verifyToken     String?   // For email verification
-  resetToken      String?   // For password reset
+  id               String         @id @default(uuid())
+  email            String
+  password         String?
+  displayName      String?
+  avatar           String? // URL to avatar image
+  isActive         Boolean        @default(true)
+  emailVerified    Boolean        @default(false)
+  verifyToken      String? // For email verification
+  resetToken       String? // For password reset
   resetTokenExpiry DateTime?
-  provider        String?   // "local", "google", "github"
-  providerId      String?
-  refreshToken    String?
-  roles           Role[]
-  files           File[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  provider         String? // "local", "google", "github"
+  providerId       String?
+  refreshToken     String?
+  appId            String // App this user belongs to
+  app              App            @relation(fields: [appId], references: [id], onDelete: Cascade)
+  roles            Role[]
+  files            File[]
+  devices          Device[]
+  subscriptions    Subscription[]
+  customers        Customer[] // Users can have multiple customers (for different subscriptions)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  // Users can have same email across different apps
+  @@unique([email, appId])
 }
 
 model Role {
-  id          String    @id @default(uuid())
-  name        String    @unique
+  id          String       @id @default(uuid())
+  name        String       @unique
   description String?
   users       User[]
   permissions Permission[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Permission {
-  id          String    @id @default(uuid())
-  name        String    @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   description String?
   roles       Role[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model File {
-  id          String    @id @default(uuid())
-  key         String    @unique
-  filename    String
-  mimetype    String
-  size        Int?
-  bucket      String
-  uploadedBy  String?
-  owner       User?     @relation(fields: [userId], references: [id])
-  userId      String?
-  status      FileStatus @default(PENDING)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String     @id @default(uuid())
+  key        String     @unique
+  filename   String
+  mimetype   String
+  size       Int?
+  bucket     String
+  uploadedBy String?
+  owner      User?      @relation(fields: [userId], references: [id])
+  userId     String?
+  status     FileStatus @default(PENDING)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
 
 enum FileStatus {
   PENDING
   UPLOADED
   FAILED
+}
+
+model Device {
+  id             String         @id @default(uuid())
+  deviceName     String? // Optional device name
+  platform       String? // "ios", "android", "web", "desktop"
+  appVersion     String? // App version
+  osVersion      String? // OS version (e.g., "14.0", "Android 13")
+  manufacturer   String? // Device manufacturer (e.g., "Apple", "Samsung")
+  model          String? // Device model (e.g., "iPhone 15", "Galaxy S23")
+  sdkVersion     String? // SDK version (Android)
+  product        String? // Product name
+  localizedModel String? // Localized model name
+  serverCount    Int            @default(0) // Number of servers created from this device
+  appId          String // App this device belongs to
+  app            App            @relation(fields: [appId], references: [id], onDelete: Cascade)
+  user           User?          @relation(fields: [userId], references: [id])
+  userId         String? // Optional - null for anonymous devices
+  subscriptions  Subscription[] // Subscriptions tied to this device
+  isActive       Boolean        @default(true)
+  lastSeen       DateTime       @default(now())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@map("devices")
+}
+
+model Customer {
+  id               String         @id @default(uuid())
+  email            String
+  displayName      String?
+  phone            String?
+  // Address fields
+  addressLine1     String?
+  addressLine2     String?
+  city             String?
+  state            String?
+  postalCode       String?
+  country          String?
+  // Stripe customer ID
+  stripeCustomerId String?        @unique
+  // Relations
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  app              App            @relation(fields: [appId], references: [id], onDelete: Cascade)
+  appId            String
+  subscriptions    Subscription[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  // Customers can have same email across different apps
+  @@unique([email, appId])
+  @@map("customers")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               String
+  device               Device?            @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  deviceId             String? // Device this subscription is tied to
+  customer             Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId           String?
+  appId                String // App this subscription belongs to
+  app                  App                @relation(fields: [appId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  subscriptionPlan     SubscriptionPlan?  @relation(fields: [stripePriceId], references: [stripePriceId])
+  status               SubscriptionStatus @default(INACTIVE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  metadata             Json? // Additional subscription metadata
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+model SubscriptionPlan {
+  id              String         @id @default(uuid())
+  stripeProductId String // Stripe product ID
+  stripePriceId   String         @unique // Stripe price ID
+  name            String // Plan name (e.g., "Pro", "Premium")
+  description     String? // Plan description
+  priceAmount     Int // Price in cents
+  currency        String         @default("USD") // Currency code
+  intervalType    String // "month", "year", etc.
+  intervalCount   Int            @default(1) // Billing interval count
+  trialPeriodDays Int?           @default(7) // Trial period in days
+  isActive        Boolean        @default(true) // Whether plan is available for signup
+  features        Json? // Plan features as JSON array
+  metadata        Json? // Additional plan metadata
+  appId           String? // Optional: link to specific app
+  app             App?           @relation(fields: [appId], references: [id], onDelete: Cascade)
+  subscriptions   Subscription[] // Users subscribed to this plan
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("subscription_plans")
+}
+
+model SubscriptionEvent {
+  id              String   @id @default(uuid())
+  stripeEventId   String   @unique
+  eventType       String // stripe event type (customer.subscription.created, etc.)
+  subscriptionId  String? // Can be null for customer events
+  processed       Boolean  @default(false)
+  eventData       Json // Raw stripe event data
+  processingError String? // Error message if processing failed
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("subscription_events")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  TRIALING
+  INCOMPLETE
 }

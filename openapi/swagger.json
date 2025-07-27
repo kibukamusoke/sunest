@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/api": {
+    "/api/api/health": {
       "get": {
         "operationId": "AppController_getHello",
         "parameters": [],
@@ -12,6 +12,110 @@
         },
         "tags": [
           "App"
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "UsersController_getAllUsers",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "example": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term for email or name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by user status (active/inactive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Filter by user role (admin/user)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by app ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns paginated users list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "pages": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all users with pagination and filtering",
+        "tags": [
+          "users"
         ]
       }
     },
@@ -50,6 +154,71 @@
           }
         ],
         "summary": "Get a user by ID",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/{id}/roles": {
+      "patch": {
+        "operationId": "UsersController_updateUserRoles",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of role names"
+                  }
+                },
+                "required": [
+                  "roles"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User roles updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update user roles (Admin only)",
         "tags": [
           "users"
         ]
@@ -502,10 +671,1531 @@
           "storage"
         ]
       }
+    },
+    "/api/subscriptions/prices": {
+      "get": {
+        "operationId": "SubscriptionsController_getPrices",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": false,
+            "in": "query",
+            "description": "App ID to filter plans by",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns available subscription prices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionPlansResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get available subscription prices from local database",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/debug-plans": {
+      "get": {
+        "operationId": "SubscriptionsController_debugPlans",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns all plans for debugging",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionPlansResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Debug endpoint to see all plans in database",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/all": {
+      "get": {
+        "operationId": "SubscriptionsController_getAllSubscriptions",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": false,
+            "in": "query",
+            "description": "App ID to filter subscriptions by",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns paginated list of subscriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionsListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all subscriptions with pagination and filtering",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/sync-stripe-plans": {
+      "post": {
+        "operationId": "SubscriptionsController_syncStripePlans",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns synced plans saved to database",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStripePlansResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sync subscription plans and prices from Stripe to local database",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/test-stripe-connection": {
+      "get": {
+        "operationId": "SubscriptionsController_testStripeConnection",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns Stripe connection test results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StripeConnectionTestResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Test Stripe connection and list products/prices",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/checkout": {
+      "post": {
+        "operationId": "SubscriptionsController_createCheckoutSession",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns checkout session URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutSessionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a Stripe checkout session",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/payment-intent": {
+      "post": {
+        "operationId": "SubscriptionsController_createPaymentIntent",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentIntentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns payment intent client secret",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentIntentDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a Stripe payment intent for mobile payment sheet",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/portal": {
+      "post": {
+        "operationId": "SubscriptionsController_createPortalSession",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePortalSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns customer portal session URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalSessionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a Stripe customer portal session",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/status/{deviceId}": {
+      "get": {
+        "operationId": "SubscriptionsController_getSubscriptionStatus",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "description": "Device ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": false,
+            "in": "query",
+            "description": "App ID to filter subscriptions by",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns subscription status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get subscription status for a device",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/limits/{deviceId}": {
+      "get": {
+        "operationId": "SubscriptionsController_getSubscriptionLimits",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "description": "Device ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns subscription limits"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get subscription limits for a device",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/device/register": {
+      "post": {
+        "operationId": "SubscriptionsController_registerDevice",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRegistrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Device registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRegistrationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Register or update a device",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/devices": {
+      "get": {
+        "operationId": "SubscriptionsController_getAllDevices",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": false,
+            "in": "query",
+            "description": "App ID to filter devices by",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns paginated list of devices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevicesListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all devices (admin only)",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/device/{deviceId}/server-created": {
+      "post": {
+        "operationId": "SubscriptionsController_recordServerCreated",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "description": "Device ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server creation recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceUpdateResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record server creation for a device",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/device/{deviceId}/server-deleted": {
+      "post": {
+        "operationId": "SubscriptionsController_recordServerDeleted",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "description": "Device ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server deletion recorded"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record server deletion for a device",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/device/{deviceId}/can-create-server": {
+      "get": {
+        "operationId": "SubscriptionsController_canCreateServer",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "description": "Device ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns whether device can create more servers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerLimitsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Check if device can create more servers",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/device/{deviceId}/can-view-logs": {
+      "get": {
+        "operationId": "SubscriptionsController_canViewLogs",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "description": "Device ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns whether device can view logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogAccessDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Check if device can view logs",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/subscriptions/device/{deviceId}/check-feature/{feature}": {
+      "post": {
+        "operationId": "SubscriptionsController_checkFeatureAccess",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "description": "Device ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feature",
+            "required": true,
+            "in": "path",
+            "description": "Feature name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns feature access status"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check if device has access to a specific feature",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/customers": {
+      "get": {
+        "operationId": "CustomersController_getAllCustomers",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": false,
+            "in": "query",
+            "description": "App ID filter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of customers"
+          }
+        },
+        "summary": "Get all customers with pagination",
+        "tags": [
+          "customers"
+        ]
+      }
+    },
+    "/api/customers/{id}": {
+      "get": {
+        "operationId": "CustomersController_getCustomerById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer details"
+          },
+          "404": {
+            "description": "Customer not found"
+          }
+        },
+        "summary": "Get customer by ID",
+        "tags": [
+          "customers"
+        ]
+      }
+    },
+    "/api/customers/{id}/subscriptions": {
+      "get": {
+        "operationId": "CustomersController_getCustomerSubscriptions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer subscriptions"
+          },
+          "404": {
+            "description": "Customer not found"
+          }
+        },
+        "summary": "Get customer subscriptions",
+        "tags": [
+          "customers"
+        ]
+      }
+    },
+    "/api/app-management": {
+      "post": {
+        "operationId": "AppManagementController_createApp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "App created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new app",
+        "tags": [
+          "app-management"
+        ]
+      },
+      "get": {
+        "operationId": "AppManagementController_getApps",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Apps retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AppResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all apps",
+        "tags": [
+          "app-management"
+        ]
+      }
+    },
+    "/api/app-management/{id}": {
+      "get": {
+        "operationId": "AppManagementController_getApp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "App ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "App retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "App not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an app by ID",
+        "tags": [
+          "app-management"
+        ]
+      },
+      "put": {
+        "operationId": "AppManagementController_updateApp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "App ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAppDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "App updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
+          "404": {
+            "description": "App not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an app",
+        "tags": [
+          "app-management"
+        ]
+      },
+      "delete": {
+        "operationId": "AppManagementController_deleteApp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "App ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "App deleted successfully"
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
+          "404": {
+            "description": "App not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an app",
+        "tags": [
+          "app-management"
+        ]
+      }
+    },
+    "/api/app-management/{id}/statistics": {
+      "get": {
+        "operationId": "AppManagementController_getAppStatistics",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "App ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "App statistics retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get app statistics",
+        "tags": [
+          "app-management"
+        ]
+      }
+    },
+    "/api/privacy-policies": {
+      "get": {
+        "operationId": "PublicPrivacyPoliciesController_renderPoliciesList",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PublicPrivacyPolicies"
+        ]
+      },
+      "post": {
+        "operationId": "PrivacyPoliciesController_createPolicy",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePrivacyPolicyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Privacy policy created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyPolicyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "409": {
+            "description": "Privacy policy with this ID already exists"
+          }
+        },
+        "summary": "Create a new privacy policy",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/ids": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_getPolicyIds",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of privacy policy IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get all privacy policy IDs",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/{id}": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_getPolicyById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Privacy policy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Privacy policy found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyPolicyDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Privacy policy not found"
+          }
+        },
+        "summary": "Get privacy policy by ID",
+        "tags": [
+          "privacy-policies"
+        ]
+      },
+      "put": {
+        "operationId": "PrivacyPoliciesController_updatePolicy",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Privacy policy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePrivacyPolicyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Privacy policy updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyPolicyDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Privacy policy not found"
+          }
+        },
+        "summary": "Update an existing privacy policy",
+        "tags": [
+          "privacy-policies"
+        ]
+      },
+      "delete": {
+        "operationId": "PrivacyPoliciesController_deletePolicy",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Privacy policy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Privacy policy deleted successfully"
+          },
+          "404": {
+            "description": "Privacy policy not found"
+          }
+        },
+        "summary": "Delete a privacy policy",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/app/{appId}": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_getPolicyByAppId",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Privacy policy found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyPolicyDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Privacy policy not found"
+          }
+        },
+        "summary": "Get privacy policy by app ID",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/app/name/{appName}": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_getPolicyByAppName",
+        "parameters": [
+          {
+            "name": "appName",
+            "required": true,
+            "in": "path",
+            "description": "Application name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Privacy policy found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyPolicyDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Privacy policy not found"
+          }
+        },
+        "summary": "Get privacy policy by app name",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/{id}/content": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_getPolicyContent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Privacy policy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Privacy policy content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "string"
+                    },
+                    "lastUpdated": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Privacy policy not found"
+          }
+        },
+        "summary": "Get privacy policy content only",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/search/query": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_searchPolicies",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "required": false,
+            "in": "query",
+            "description": "Language filter",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrivacyPolicyDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search privacy policies",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/web": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_renderPoliciesList",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Render privacy policies list page",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/web/{id}": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_renderPolicyPage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Privacy policy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Render privacy policy page",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/web/app/{appId}": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_renderPolicyPageByAppId",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Render privacy policy page by app ID",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policies/web/app/name/{appName}": {
+      "get": {
+        "operationId": "PrivacyPoliciesController_renderPolicyPageByAppName",
+        "parameters": [
+          {
+            "name": "appName",
+            "required": true,
+            "in": "path",
+            "description": "Application name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Render privacy policy page by app name",
+        "tags": [
+          "privacy-policies"
+        ]
+      }
+    },
+    "/api/privacy-policy/{id}": {
+      "get": {
+        "operationId": "PublicPrivacyPoliciesController_renderPolicyPage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PublicPrivacyPolicies"
+        ]
+      }
+    },
+    "/api/privacy-policy/app/{appId}": {
+      "get": {
+        "operationId": "PublicPrivacyPoliciesController_renderPolicyPageByAppId",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PublicPrivacyPolicies"
+        ]
+      }
+    },
+    "/api/privacy-policy/app/name/{appName}": {
+      "get": {
+        "operationId": "PublicPrivacyPoliciesController_renderPolicyPageByAppName",
+        "parameters": [
+          {
+            "name": "appName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PublicPrivacyPolicies"
+        ]
+      }
+    },
+    "/api": {
+      "get": {
+        "operationId": "PublicPrivacyPoliciesController_redirectToPrivacyPolicies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PublicPrivacyPolicies"
+        ]
+      }
     }
   },
   "info": {
-    "title": "Sunest API",
+    "title": "Doctopus API",
     "description": "Modern NestJS API with comprehensive features",
     "version": "1.0",
     "contact": {}
@@ -1115,6 +2805,835 @@
         "required": [
           "fileId"
         ]
+      },
+      "SubscriptionPlanDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Plan ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Plan name"
+          },
+          "stripePriceId": {
+            "type": "string",
+            "description": "Stripe Price ID"
+          },
+          "stripeProductId": {
+            "type": "string",
+            "description": "Stripe Product ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Plan description"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Plan amount in cents"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code"
+          },
+          "interval": {
+            "type": "string",
+            "description": "Billing interval"
+          },
+          "features": {
+            "description": "Plan features",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether plan is active"
+          },
+          "subscriberCount": {
+            "type": "number",
+            "description": "Number of subscribers"
+          },
+          "appId": {
+            "type": "string",
+            "description": "App ID for multi-tenancy"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "stripePriceId",
+          "amount",
+          "currency",
+          "interval",
+          "features",
+          "isActive",
+          "subscriberCount"
+        ]
+      },
+      "SubscriptionPlansResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "description": "List of subscription plans",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionPlanDto"
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SubscriptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Subscription ID"
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID"
+          },
+          "customerId": {
+            "type": "object",
+            "description": "Stripe Customer ID"
+          },
+          "subscriptionId": {
+            "type": "string",
+            "description": "Stripe Subscription ID"
+          },
+          "priceId": {
+            "type": "string",
+            "description": "Stripe Price ID"
+          },
+          "status": {
+            "type": "string",
+            "description": "Subscription status"
+          },
+          "currentPeriodStart": {
+            "type": "object",
+            "description": "Current period start"
+          },
+          "currentPeriodEnd": {
+            "type": "object",
+            "description": "Current period end"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether subscription is active"
+          },
+          "appId": {
+            "type": "string",
+            "description": "App ID for multi-tenancy"
+          },
+          "createdAt": {
+            "type": "object",
+            "description": "Created at timestamp"
+          },
+          "updatedAt": {
+            "type": "object",
+            "description": "Updated at timestamp"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "SubscriptionsListResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "subscriptions": {
+            "description": "List of subscriptions",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of subscriptions"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page"
+          },
+          "pages": {
+            "type": "number",
+            "description": "Total number of pages"
+          }
+        },
+        "required": [
+          "success",
+          "subscriptions",
+          "total",
+          "page",
+          "limit",
+          "pages"
+        ]
+      },
+      "SyncStripePlansResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "description": "Synced plans",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionPlanDto"
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message"
+        ]
+      },
+      "StripeConnectionTestResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "type": "object",
+            "description": "Stripe connection test data"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message"
+        ]
+      },
+      "CreateCheckoutDto": {
+        "type": "object",
+        "properties": {
+          "priceId": {
+            "type": "string",
+            "description": "Stripe Price ID"
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID"
+          },
+          "email": {
+            "type": "string",
+            "description": "Customer email"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Customer display name"
+          },
+          "successUrl": {
+            "type": "string",
+            "description": "Success URL"
+          },
+          "cancelUrl": {
+            "type": "string",
+            "description": "Cancel URL"
+          },
+          "appId": {
+            "type": "string",
+            "description": "App ID"
+          }
+        },
+        "required": [
+          "priceId",
+          "deviceId",
+          "email"
+        ]
+      },
+      "CheckoutSessionDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "type": "object",
+            "description": "Checkout session information"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message"
+        ]
+      },
+      "CreatePaymentIntentDto": {
+        "type": "object",
+        "properties": {
+          "priceId": {
+            "type": "string",
+            "description": "Stripe Price ID"
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID"
+          },
+          "email": {
+            "type": "string",
+            "description": "Customer email"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Customer display name"
+          },
+          "appId": {
+            "type": "string",
+            "description": "App ID"
+          }
+        },
+        "required": [
+          "priceId",
+          "deviceId",
+          "email"
+        ]
+      },
+      "PaymentIntentDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "type": "object",
+            "description": "Payment intent information"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message"
+        ]
+      },
+      "CreatePortalSessionDto": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Device ID"
+          },
+          "returnUrl": {
+            "type": "string",
+            "description": "Return URL"
+          }
+        },
+        "required": [
+          "deviceId"
+        ]
+      },
+      "PortalSessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "type": "object",
+            "description": "Portal session information"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SubscriptionStatusDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "type": "object",
+            "description": "Subscription status information"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message"
+        ]
+      },
+      "DeviceRegistrationDto": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Unique device identifier (optional, backend will generate if not provided)"
+          },
+          "deviceName": {
+            "type": "string",
+            "description": "Device name"
+          },
+          "platform": {
+            "type": "string",
+            "description": "Platform (ios, android, etc.)"
+          },
+          "appVersion": {
+            "type": "string",
+            "description": "App version"
+          },
+          "appId": {
+            "type": "string",
+            "description": "App ID for multi-tenancy"
+          },
+          "osVersion": {
+            "type": "string",
+            "description": "OS version"
+          },
+          "manufacturer": {
+            "type": "string",
+            "description": "Device manufacturer"
+          },
+          "model": {
+            "type": "string",
+            "description": "Device model"
+          },
+          "sdkVersion": {
+            "type": "string",
+            "description": "SDK version (Android)"
+          },
+          "product": {
+            "type": "string",
+            "description": "Product name"
+          },
+          "localizedModel": {
+            "type": "string",
+            "description": "Localized model name"
+          }
+        },
+        "required": [
+          "appId"
+        ]
+      },
+      "DeviceRegistrationResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "type": "object",
+            "description": "Device information"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message"
+        ]
+      },
+      "DeviceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Device ID"
+          },
+          "deviceId": {
+            "type": "object",
+            "description": "Device identifier"
+          },
+          "deviceName": {
+            "type": "object",
+            "description": "Device name"
+          },
+          "platform": {
+            "type": "object",
+            "description": "Platform (ios, android, etc.)"
+          },
+          "appVersion": {
+            "type": "object",
+            "description": "App version"
+          },
+          "serverCount": {
+            "type": "number",
+            "description": "Number of servers"
+          },
+          "userId": {
+            "type": "object",
+            "description": "User ID"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether device is active"
+          },
+          "lastSeen": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last seen timestamp"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Created at timestamp"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Updated at timestamp"
+          },
+          "hasActiveSubscription": {
+            "type": "boolean",
+            "description": "Whether device has active subscription"
+          },
+          "maxServers": {
+            "type": "number",
+            "description": "Maximum number of servers"
+          },
+          "canViewLogs": {
+            "type": "boolean",
+            "description": "Whether device can view logs"
+          },
+          "appId": {
+            "type": "object",
+            "description": "App ID for multi-tenancy"
+          },
+          "osVersion": {
+            "type": "object",
+            "description": "OS version"
+          },
+          "manufacturer": {
+            "type": "object",
+            "description": "Device manufacturer"
+          },
+          "model": {
+            "type": "object",
+            "description": "Device model"
+          },
+          "sdkVersion": {
+            "type": "object",
+            "description": "SDK version (Android)"
+          },
+          "product": {
+            "type": "object",
+            "description": "Product name"
+          },
+          "localizedModel": {
+            "type": "object",
+            "description": "Localized model name"
+          }
+        },
+        "required": [
+          "id",
+          "serverCount",
+          "isActive",
+          "lastSeen",
+          "createdAt",
+          "updatedAt",
+          "hasActiveSubscription",
+          "maxServers",
+          "canViewLogs"
+        ]
+      },
+      "DevicesListResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "description": "List of devices",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "description": "Pagination information"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "pagination"
+        ]
+      },
+      "DeviceUpdateResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "description": "Updated device information",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceDto"
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "ServerLimitsDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "type": "object",
+            "description": "Server creation limits"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message"
+        ]
+      },
+      "LogAccessDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Success status"
+          },
+          "data": {
+            "type": "object",
+            "description": "Log access information"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message"
+        ]
+      },
+      "CreateAppDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique app name (used as identifier)",
+            "example": "my-new-app",
+            "minLength": 3,
+            "maxLength": 50
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable display name",
+            "example": "My New App",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "App description",
+            "example": "A comprehensive app for managing containers",
+            "maxLength": 500
+          },
+          "domain": {
+            "type": "string",
+            "description": "App domain (optional)",
+            "example": "myapp.example.com"
+          },
+          "settings": {
+            "type": "object",
+            "description": "App-specific settings (JSON object)",
+            "example": {
+              "theme": "dark",
+              "language": "en"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "displayName"
+        ]
+      },
+      "AppResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "App ID",
+            "example": "uuid-string"
+          },
+          "name": {
+            "type": "string",
+            "description": "App name",
+            "example": "my-app"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name",
+            "example": "My App"
+          },
+          "description": {
+            "type": "string",
+            "description": "App description",
+            "example": "A comprehensive app for managing containers"
+          },
+          "domain": {
+            "type": "string",
+            "description": "App domain",
+            "example": "myapp.example.com"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the app is active",
+            "example": true
+          },
+          "settings": {
+            "type": "object",
+            "description": "App-specific settings",
+            "example": {
+              "theme": "dark",
+              "language": "en"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp",
+            "example": "2023-01-01T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last update timestamp",
+            "example": "2023-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "displayName",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateAppDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable display name",
+            "example": "Updated App Name",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "App description",
+            "example": "Updated app description",
+            "maxLength": 500
+          },
+          "domain": {
+            "type": "string",
+            "description": "App domain (optional)",
+            "example": "updated.example.com"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the app is active",
+            "example": true
+          },
+          "settings": {
+            "type": "object",
+            "description": "App-specific settings (JSON object)",
+            "example": {
+              "theme": "light",
+              "language": "es"
+            }
+          }
+        }
+      },
+      "PrivacyPolicyDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreatePrivacyPolicyDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdatePrivacyPolicyDto": {
+        "type": "object",
+        "properties": {}
       }
     }
   }

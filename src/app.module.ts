@@ -12,6 +12,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { JobsModule } from './modules/jobs/jobs.module';
 import { PgNotifyModule } from './modules/pg-notify/pg-notify.module';
 import { WebSocketModule } from './modules/websockets/websocket.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { AppManagementModule } from './modules/app-management/app-management.module';
+import { PrivacyPoliciesModule } from './modules/privacy-policies/privacy-policies.module';
 import { LoggerModule } from 'nestjs-pino';
 
 @Module({
@@ -66,8 +69,11 @@ import { LoggerModule } from 'nestjs-pino';
     JobsModule,
     PgNotifyModule,
     WebSocketModule,
+    SubscriptionsModule,
+    AppManagementModule,
+    PrivacyPoliciesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

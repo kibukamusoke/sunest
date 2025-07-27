@@ -26,11 +26,10 @@
     "debug:env": "node scripts/debug-env.js",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "openapi:angular": "rimraf ./sdk/angular && npx @openapitools/openapi-generator-cli generate -i ./openapi/swagger.json -g typescript-angular -o ./sdk/angular -c ./openapi/openapi-generator-config.json",
-    "openapi:react": "rimraf ./sdk/react && npx openapi-typescript-codegen --input ./openapi/swagger.json --output ./sdk/react --client axios --name SunestApi",
-    "openapi:typescript": "rimraf ./sdk/typescript && npx swagger-typescript-api generate -p ./openapi/swagger.json -o ./sdk/typescript -n api.ts --axios",
-    "openapi:flutter": "rimraf ./sdk/flutter && mkdir -p ./sdk/flutter && npx @openapitools/openapi-generator-cli generate -i ./openapi/swagger.json -g dart-dio -o ./sdk/flutter",
-    "generate:all-sdks": "npm run openapi:angular && npm run openapi:react && npm run openapi:typescript && npm run openapi:flutter"
+    "openapi:admin": "rimraf /Users/trevorsuna/POLARIS/MAVERICK/PortainerApp/admin/src/lib/sdk && npx openapi-typescript-codegen --input ./openapi/swagger.json --output /Users/trevorsuna/POLARIS/MAVERICK/PortainerApp/admin/src/lib/sdk --client axios --name DoctopusAPI",
+    "openapi:flutter": "openapi-generator-cli generate -i ./openapi/swagger.json -g dart -o ./flutter_sdk --additional-properties=pubName=doctopussdk,pubAuthor=TrevorSuna,pubAuthorEmail=trevorsuna@gmail.com,pubHomepage=https://duriangold.tvxlabs.com,pubVersion=1.0.1 && cd ./flutter_sdk && flutter pub get && cd ..",
+    "sdk": "npm run openapi:admin && npm run openapi:flutter",
+    "deploy": "npm run build && docker buildx build --platform linux/arm64 -t $ECR_REGISTRY/tvxapps/tvxsunest:0.2 --push ."
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",
@@ -43,6 +42,7 @@
     "@nestjs/platform-express": "^11.0.14",
     "@nestjs/platform-socket.io": "^11.0.14",
     "@nestjs/schedule": "^5.0.1",
+    "@nestjs/serve-static": "^5.0.3",
     "@nestjs/swagger": "^11.1.1",
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/websockets": "^11.0.14",
@@ -79,7 +79,8 @@
     "prisma": "^6.6.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "stripe": "^18.3.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

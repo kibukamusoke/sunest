@@ -72,7 +72,7 @@ async function bootstrap() {
       }),
     );
     app.enableCors({
-      origin: ['https://apps.tvxlabs.com', 'http://localhost:3000', 'http://localhost:8080', '*'],
+      origin: ['https://hwadmin.tvxlabs.com', 'http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'],
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
       allowedHeaders: 'Content-Type,Accept,Authorization',
@@ -84,11 +84,11 @@ async function bootstrap() {
 
     // Swagger documentation
     const config = new DocumentBuilder()
-      .setTitle('Doctopus API')
+      .setTitle('HardwareWorld API')
       .setDescription('Modern NestJS API with comprehensive features')
       .setVersion('1.0')
       .addServer('http://localhost:3000', 'Local Development')
-      .addServer('https://tree2u.kobotogether.com', 'Production')
+      .addServer('https://hardwareworld.tvxlabs.com', 'Production')
       .addBearerAuth({
         type: 'http',
         scheme: 'bearer',

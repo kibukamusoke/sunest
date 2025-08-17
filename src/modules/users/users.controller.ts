@@ -19,6 +19,34 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 export class UsersController {
   constructor(private usersService: UsersService) { }
 
+  @Get('roles')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all available user roles' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns list of all available user roles',
+    schema: {
+      type: 'object',
+      properties: {
+        roles: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              description: { type: 'string' }
+            }
+          }
+        }
+      }
+    }
+  })
+  async getAllRoles() {
+    return this.usersService.getAllRoles();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -49,7 +77,6 @@ export class UsersController {
     @Query('search') search?: string,
     @Query('status') status?: string,
     @Query('role') role?: string,
-    @Query('appId') appId?: string,
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 20;
@@ -60,7 +87,6 @@ export class UsersController {
       search,
       status,
       role,
-      appId,
     });
   }
 
@@ -115,7 +141,7 @@ export class UsersController {
   ): Promise<User> {
     // Check if current user is admin
     const currentUser = await this.usersService.findById(req.user.userId);
-    if (!currentUser || !currentUser.roles.includes('admin')) {
+    if (!currentUser || !currentUser.hasRole('admin') && !currentUser.hasRole('system_admin')) {
       throw new HttpException('Admin access required', HttpStatus.FORBIDDEN);
     }
 

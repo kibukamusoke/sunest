@@ -1,12 +1,12 @@
-import { 
-  Controller, 
-  Post, 
-  Body, 
-  UseGuards, 
-  Get, 
-  Req, 
-  Query, 
-  HttpCode, 
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Req,
+  Query,
+  HttpCode,
   HttpStatus,
   Res,
   Render,
@@ -25,11 +25,11 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UsersService } from '../users/users.service';
 import { Response } from 'express';
-import { 
-  LoginResponseDto, 
-  RefreshTokenResponseDto, 
-  RegisterResponseDto, 
-  SuccessResponseDto, 
+import {
+  LoginResponseDto,
+  RefreshTokenResponseDto,
+  RegisterResponseDto,
+  SuccessResponseDto,
   ProfileResponseDto,
   VerifyEmailResponseDto,
   ForgotPasswordResponseDto,
@@ -42,7 +42,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   @Post('login')
   @UseGuards(LocalAuthGuard)
@@ -59,8 +59,7 @@ export class AuthController {
     return this.authService.register(
       registerDto.email,
       registerDto.password,
-      registerDto.displayName,
-      registerDto.avatar
+      registerDto.displayName
     );
   }
 
@@ -93,14 +92,14 @@ export class AuthController {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    
-   
+
+
     // Create the profile response with address info if available
     const profileResponseDto = new ProfileResponseDto({
       ...user,
     });
 
-  
+
     return profileResponseDto;
 
   }
@@ -139,7 +138,7 @@ export class ResetPasswordViewController {
   constructor(
     private authService: AuthService,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   @Get('reset-password')
   @Render('reset-password')
@@ -148,21 +147,21 @@ export class ResetPasswordViewController {
     if (!token) {
       throw new BadRequestException('Reset token is required');
     }
-    
+
     // Verify token is valid, but don't consume it yet
     const user = await this.usersService.findByResetToken(token);
     if (!user) {
-      return { 
-        error: true, 
+      return {
+        error: true,
         message: 'Invalid or expired password reset token. Please request a new one.',
         token: null
       };
     }
-    
-    return { 
-      error: false, 
+
+    return {
+      error: false,
       message: '',
-      token 
+      token
     };
   }
 
@@ -173,37 +172,37 @@ export class ResetPasswordViewController {
     @Res() res: Response
   ) {
     const { token, password, confirmPassword } = body;
-    
+
     if (!token) {
-      return res.render('reset-password', { 
-        error: true, 
+      return res.render('reset-password', {
+        error: true,
         message: 'Reset token is missing',
         token: null
       });
     }
-    
+
     if (password !== confirmPassword) {
-      return res.render('reset-password', { 
-        error: true, 
+      return res.render('reset-password', {
+        error: true,
         message: 'Passwords do not match',
         token
       });
     }
-    
+
     if (password.length < 6) {
-      return res.render('reset-password', { 
-        error: true, 
+      return res.render('reset-password', {
+        error: true,
         message: 'Password must be at least 6 characters long',
         token
       });
     }
-    
+
     try {
       await this.authService.resetPassword(token, password);
       return res.render('reset-password-success');
     } catch (error) {
-      return res.render('reset-password', { 
-        error: true, 
+      return res.render('reset-password', {
+        error: true,
         message: error.message || 'Failed to reset password. Please try again.',
         token
       });

@@ -108,7 +108,7 @@ export class MailgunService implements OnModuleInit {
     }
 
     try {
-      const { to, templateName, templateVars, subject } = templateDto;
+      const { to, templateName, templateVars } = templateDto;
 
       const options: MailgunMessageData = {
         from: `${this.fromName} <${this.fromEmail}>`,
@@ -120,7 +120,6 @@ export class MailgunService implements OnModuleInit {
           )
           .join(','),
         template: templateName,
-        subject: subject || '',
         text: '',
         html: '',
         attachment: '',

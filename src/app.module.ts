@@ -10,11 +10,14 @@ import { HealthModule } from './modules/health/health.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { JobsModule } from './modules/jobs/jobs.module';
-import { PgNotifyModule } from './modules/pg-notify/pg-notify.module';
-import { WebSocketModule } from './modules/websockets/websocket.module';
-import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
-import { AppManagementModule } from './modules/app-management/app-management.module';
-import { PrivacyPoliciesModule } from './modules/privacy-policies/privacy-policies.module';
+import { MerchantManagementModule } from './modules/merchant-management/merchant-management.module';
+import { ProductCatalogModule } from './modules/product-catalog/product-catalog.module';
+import { InventoryManagementModule } from './modules/inventory-management/inventory-management.module';
+import { SearchDiscoveryModule } from './modules/search-discovery/search-discovery.module';
+import { RFQManagementModule } from './modules/rfq-management/rfq-management.module';
+import { CartCheckoutModule } from './modules/cart-checkout/cart-checkout.module';
+import { OrderFulfillmentModule } from './modules/order-fulfillment/order-fulfillment.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { LoggerModule } from 'nestjs-pino';
 
 @Module({
@@ -67,11 +70,14 @@ import { LoggerModule } from 'nestjs-pino';
     StorageModule,
     NotificationsModule,
     JobsModule,
-    PgNotifyModule,
-    WebSocketModule,
-    SubscriptionsModule,
-    AppManagementModule,
-    PrivacyPoliciesModule,
+    MerchantManagementModule,
+    ProductCatalogModule,
+    InventoryManagementModule,
+    SearchDiscoveryModule,
+    RFQManagementModule,
+    CartCheckoutModule,
+    OrderFulfillmentModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

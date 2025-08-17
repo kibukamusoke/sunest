@@ -3,7 +3,12 @@ import { FirebaseNotificationService } from './firebase-notification.service';
 import { TelegramNotificationService } from './telegram-notification.service';
 import { MailgunService } from './mailgun.service';
 import { NotificationService } from './notification.service';
+import { EnhancedNotificationService } from './enhanced-notification.service';
+import { NotificationIntegrationService } from './notification-integration.service';
+import { TemplateSeederService } from './template-seeder.service';
+import { EnhancedNotificationController } from './enhanced-notification.controller';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../config/prisma.service';
 
 import { MailgunModule } from 'nestjs-mailgun';
 
@@ -22,12 +27,23 @@ import { MailgunModule } from 'nestjs-mailgun';
       inject: [ConfigService],
     }) as any,
   ],
+  controllers: [EnhancedNotificationController],
   providers: [
+    PrismaService,
     FirebaseNotificationService,
     TelegramNotificationService,
     MailgunService,
     NotificationService,
+    EnhancedNotificationService,
+    NotificationIntegrationService,
+    TemplateSeederService,
   ],
-  exports: [NotificationService, MailgunService],
+  exports: [
+    NotificationService,
+    MailgunService,
+    EnhancedNotificationService,
+    NotificationIntegrationService,
+    TemplateSeederService,
+  ],
 })
 export class NotificationsModule { }

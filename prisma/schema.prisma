@@ -11,53 +11,70 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model App {
-  id          String   @id @default(uuid())
-  name        String   @unique // App name (e.g., "Portainer", "DockerManager")
-  displayName String // Human readable name
-  description String?
-  domain      String? // Optional domain for app
-  isActive    Boolean  @default(true)
-  settings    Json? // App-specific settings
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  users             User[]
-  devices           Device[]
-  subscriptions     Subscription[]
-  subscriptionPlans SubscriptionPlan[]
-  customers         Customer[]
-
-  @@map("apps")
-}
-
 model User {
-  id               String         @id @default(uuid())
+  id               String     @id @default(uuid())
   email            String
   password         String?
   displayName      String?
+  firstName        String?
+  lastName         String?
+  phoneNumber      String?
   avatar           String? // URL to avatar image
-  isActive         Boolean        @default(true)
-  emailVerified    Boolean        @default(false)
+  isActive         Boolean    @default(true)
+  emailVerified    Boolean    @default(false)
   verifyToken      String? // For email verification
   resetToken       String? // For password reset
   resetTokenExpiry DateTime?
   provider         String? // "local", "google", "github"
   providerId       String?
   refreshToken     String?
-  appId            String // App this user belongs to
-  app              App            @relation(fields: [appId], references: [id], onDelete: Cascade)
   roles            Role[]
   files            File[]
-  devices          Device[]
-  subscriptions    Subscription[]
   customers        Customer[] // Users can have multiple customers (for different subscriptions)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+
+  // B2B Hardware World specific fields
+  jobTitle      String? // User's job title in their company
+  department    String? // Department they work in
+  approvalLimit Decimal? // Maximum order amount they can approve (for buyers)
+
+  // Relations for B2B functionality
+  companies UserCompany[] // Companies this user belongs to (for buyers)
+  merchants UserMerchant[] // Merchants this user belongs to (for merchant users)
+
+  // RFQ & Quote Relations
+  rfqs          RFQ[]
+  rfqComments   RFQComment[]
+  quoteComments QuoteComment[]
+
+  // Cart & Checkout Relations
+  carts      Cart[]
+  checkouts  Checkout[]
+  savedItems SavedItem[]
+  addresses  Address[]
+
+  // Order Management Relations
+  orders       Order[]
+  fulfillments Fulfillment[] // Orders assigned for picking
+  invoices     Invoice[]
+  orderEvents  OrderEvent[]
+
+  // Notification Relations
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  systemEvents            SystemEvent[]
+  notificationRules       NotificationRule[]
+
+  // Analytics Relations
+  dashboards             Dashboard[]
+  reports                Report[]
+  dashboardSubscriptions DashboardSubscription[]
+  analyticsSessions      AnalyticsSession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Users can have same email across different apps
-  @@unique([email, appId])
+  @@unique([email])
 }
 
 model Role {
@@ -85,48 +102,31 @@ model File {
   filename   String
   mimetype   String
   size       Int?
-  bucket     String
+  bucket     String? // Make bucket optional for local storage
+  url        String? // Public URL for accessing the file
   uploadedBy String?
   owner      User?      @relation(fields: [userId], references: [id])
   userId     String?
   status     FileStatus @default(PENDING)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+
+  // Merchant documents relation
+  merchantDocuments MerchantDocument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum FileStatus {
   PENDING
   UPLOADED
   FAILED
-}
-
-model Device {
-  id             String         @id @default(uuid())
-  deviceName     String? // Optional device name
-  platform       String? // "ios", "android", "web", "desktop"
-  appVersion     String? // App version
-  osVersion      String? // OS version (e.g., "14.0", "Android 13")
-  manufacturer   String? // Device manufacturer (e.g., "Apple", "Samsung")
-  model          String? // Device model (e.g., "iPhone 15", "Galaxy S23")
-  sdkVersion     String? // SDK version (Android)
-  product        String? // Product name
-  localizedModel String? // Localized model name
-  serverCount    Int            @default(0) // Number of servers created from this device
-  appId          String // App this device belongs to
-  app            App            @relation(fields: [appId], references: [id], onDelete: Cascade)
-  user           User?          @relation(fields: [userId], references: [id])
-  userId         String? // Optional - null for anonymous devices
-  subscriptions  Subscription[] // Subscriptions tied to this device
-  isActive       Boolean        @default(true)
-  lastSeen       DateTime       @default(now())
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  @@map("devices")
+  VERIFIED
+  REJECTED
+  DELETED
 }
 
 model Customer {
-  id               String         @id @default(uuid())
+  id               String   @id @default(uuid())
   email            String
   displayName      String?
   phone            String?
@@ -138,92 +138,2738 @@ model Customer {
   postalCode       String?
   country          String?
   // Stripe customer ID
-  stripeCustomerId String?        @unique
+  stripeCustomerId String?  @unique
   // Relations
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId           String
-  app              App            @relation(fields: [appId], references: [id], onDelete: Cascade)
-  appId            String
-  subscriptions    Subscription[]
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Customers can have same email across different apps
-  @@unique([email, appId])
+  @@unique([email])
   @@map("customers")
 }
 
-model Subscription {
-  id                   String             @id @default(uuid())
-  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId               String
-  device               Device?            @relation(fields: [deviceId], references: [id], onDelete: SetNull)
-  deviceId             String? // Device this subscription is tied to
-  customer             Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  customerId           String?
-  appId                String // App this subscription belongs to
-  app                  App                @relation(fields: [appId], references: [id], onDelete: Cascade)
-  stripeCustomerId     String?
-  stripeSubscriptionId String?            @unique
-  stripePriceId        String?
-  subscriptionPlan     SubscriptionPlan?  @relation(fields: [stripePriceId], references: [stripePriceId])
-  status               SubscriptionStatus @default(INACTIVE)
-  currentPeriodStart   DateTime?
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean            @default(false)
-  canceledAt           DateTime?
-  trialStart           DateTime?
-  trialEnd             DateTime?
-  metadata             Json? // Additional subscription metadata
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+// ============ HARDWARE WORLD B2B MODELS ============
 
-  @@map("subscriptions")
+model Company {
+  id          String  @id @default(uuid())
+  name        String
+  displayName String?
+  description String?
+  industry    String?
+  website     String?
+  logoUrl     String?
+
+  // Address fields
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+
+  // Business details
+  taxId              String? // Tax identification number
+  registrationNumber String? // Business registration number
+  creditLimit        Decimal? // Credit limit for purchases
+  paymentTerms       String? // e.g., "NET30", "NET60"
+
+  // Status and settings
+  isActive          Boolean @default(true)
+  isVerified        Boolean @default(false)
+  verificationNotes String?
+
+  // Relations
+  users UserCompany[]
+  rfqs  RFQ[] // RFQs submitted by this company
+
+  // Cart & Checkout Relations
+  carts     Cart[]
+  checkouts Checkout[]
+  addresses Address[]
+
+  // Order Management Relations
+  orders   Order[]
+  invoices Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name])
+  @@map("companies")
 }
 
-model SubscriptionPlan {
-  id              String         @id @default(uuid())
-  stripeProductId String // Stripe product ID
-  stripePriceId   String         @unique // Stripe price ID
-  name            String // Plan name (e.g., "Pro", "Premium")
-  description     String? // Plan description
-  priceAmount     Int // Price in cents
-  currency        String         @default("USD") // Currency code
-  intervalType    String // "month", "year", etc.
-  intervalCount   Int            @default(1) // Billing interval count
-  trialPeriodDays Int?           @default(7) // Trial period in days
-  isActive        Boolean        @default(true) // Whether plan is available for signup
-  features        Json? // Plan features as JSON array
-  metadata        Json? // Additional plan metadata
-  appId           String? // Optional: link to specific app
-  app             App?           @relation(fields: [appId], references: [id], onDelete: Cascade)
-  subscriptions   Subscription[] // Users subscribed to this plan
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+model Merchant {
+  id          String  @id @default(uuid())
+  name        String
+  displayName String?
+  description String?
+  logoUrl     String?
 
-  @@map("subscription_plans")
+  // Business details
+  businessType       String? // "manufacturer", "distributor", "retailer"
+  taxId              String?
+  registrationNumber String?
+
+  // Contact information
+  contactEmail String?
+  contactPhone String?
+  website      String?
+
+  // Address fields
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+
+  // Business settings
+  minimumOrderValue Decimal?
+  shippingPolicy    String?
+  returnPolicy      String?
+
+  // Malaysia E-Invoicing fields
+  tin           String? // Tax Identification Number
+  idType        IdType? // Type of identification document
+  idValue       String? // Identification document number
+  eInvoiceOptIn Boolean @default(false) // Opt-in for e-invoice submission
+
+  // Status and approval
+  status          MerchantStatus @default(PENDING)
+  isActive        Boolean        @default(true)
+  approvedAt      DateTime?
+  approvedBy      String? // User ID who approved
+  rejectionReason String?
+
+  // Relations
+  users      UserMerchant[]
+  products   Product[]
+  warehouses Warehouse[]
+  quotes     Quote[] // Quotes submitted by this merchant
+  documents  MerchantDocument[] // Supporting documents for KYC
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name])
+  @@map("merchants")
 }
 
-model SubscriptionEvent {
-  id              String   @id @default(uuid())
-  stripeEventId   String   @unique
-  eventType       String // stripe event type (customer.subscription.created, etc.)
-  subscriptionId  String? // Can be null for customer events
-  processed       Boolean  @default(false)
-  eventData       Json // Raw stripe event data
-  processingError String? // Error message if processing failed
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+model UserCompany {
+  id        String  @id @default(uuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  @@map("subscription_events")
+  // User's role within the company
+  role String @default("employee") // "admin", "manager", "employee", "viewer"
+
+  // Status
+  isActive Boolean  @default(true)
+  joinedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, companyId])
+  @@map("user_companies")
 }
 
-enum SubscriptionStatus {
-  ACTIVE
+model UserMerchant {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  // User's role within the merchant organization
+  role String @default("user") // "admin", "manager", "user"
+
+  // Permissions within merchant
+  canManageProducts Boolean @default(false)
+  canManageOrders   Boolean @default(false)
+  canManagePricing  Boolean @default(false)
+  canViewAnalytics  Boolean @default(false)
+
+  // Status
+  isActive Boolean  @default(true)
+  joinedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, merchantId])
+  @@map("user_merchants")
+}
+
+enum MerchantStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
   INACTIVE
-  PAST_DUE
-  CANCELED
-  UNPAID
-  TRIALING
-  INCOMPLETE
+}
+
+enum IdType {
+  NRIC
+  BRN
+  PASSPORT
+  ARMY
+}
+
+// ==================== PRODUCT CATALOG MODELS ====================
+
+model Category {
+  id          String  @id @default(uuid())
+  name        String
+  displayName String?
+  description String?
+  imageUrl    String?
+
+  // Hierarchy support for nested categories
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+
+  // Category configuration
+  isActive  Boolean @default(true)
+  sortOrder Int?    @default(0)
+
+  // SEO and metadata
+  slug            String  @unique
+  metaTitle       String?
+  metaDescription String?
+
+  // AI Search and Vector Embeddings
+  // Vector embeddings for semantic category search
+  nameEmbedding        Unsupported("vector(1536)")? // Category name + display name embedding
+  descriptionEmbedding Unsupported("vector(1536)")? // Category description embedding
+
+  // Embedding metadata
+  embeddingVersion   String? // Version/model used for embeddings
+  embeddingCreatedAt DateTime? // When embeddings were last generated
+  embeddingHash      String? // Hash of content used to generate embeddings
+
+  // Relations
+  products           Product[]
+  attributeTemplates ProductAttributeTemplate[]
+
+  // Audit fields
+  createdBy String? // Admin user ID who created
+  updatedBy String? // Admin user ID who last updated
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([embeddingVersion])
+  @@index([embeddingCreatedAt])
+  @@map("categories")
+}
+
+model Product {
+  id               String  @id @default(uuid())
+  name             String
+  displayName      String?
+  description      String?
+  shortDescription String?
+
+  // Product identification
+  sku     String  @unique
+  barcode String?
+  mpn     String? // Manufacturer Part Number
+
+  // Product classification
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  // Merchant relationship
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
+
+  // Product specifications
+  brand      String?
+  model      String?
+  weight     Decimal? // in kg
+  dimensions String? // JSON string: {"length": 10, "width": 5, "height": 3, "unit": "cm"}
+
+  // Pricing (base prices - can be overridden by inventory/pricing rules)
+  basePrice Decimal
+  msrp      Decimal? // Manufacturer Suggested Retail Price
+  costPrice Decimal? // Merchant's cost
+
+  // Product media
+  images    String[] // Array of image URLs
+  videos    String[] // Array of video URLs
+  documents String[] // Array of document URLs (specs, manuals, etc.)
+
+  // Product status and visibility
+  status    ProductStatus @default(DRAFT)
+  isActive  Boolean       @default(true)
+  isDigital Boolean       @default(false)
+
+  // Inventory tracking
+  trackInventory Boolean @default(true)
+
+  // B2B specific fields
+  minimumOrderQuantity Int? @default(1)
+  orderMultiple        Int? @default(1) // Must order in multiples of this number
+
+  // SEO and searchability
+  slug            String
+  tags            String[] // Search tags
+  metaTitle       String?
+  metaDescription String?
+
+  // AI Search and Vector Embeddings
+  // Vector embeddings for semantic search (1536 dimensions for OpenAI text-embedding-ada-002)
+  titleEmbedding          Unsupported("vector(1536)")? // Product name + display name embedding
+  descriptionEmbedding    Unsupported("vector(1536)")? // Product description embedding
+  specificationsEmbedding Unsupported("vector(1536)")? // Combined specs (brand, model, features) embedding
+  combinedEmbedding       Unsupported("vector(1536)")? // Combined all-fields embedding for general search
+
+  // Embedding metadata
+  embeddingVersion   String? // Version/model used for embeddings (e.g., "text-embedding-ada-002")
+  embeddingCreatedAt DateTime? // When embeddings were last generated
+  embeddingHash      String? // Hash of content used to generate embeddings (for cache invalidation)
+
+  // Search optimization fields
+  searchVector String? // Pre-computed search vector for faster queries
+  searchScore  Float?    @default(0) // Relevance score based on popularity
+  lastSearched DateTime? // Track when product was last searched
+  searchCount  Int       @default(0) // Track how often product is searched
+
+  // Relations
+  variants       ProductVariant[]
+  inventoryItems InventoryItem[]
+
+  // RFQ & Quote Relations
+  rfqItems   RFQItem[]
+  quoteItems QuoteItem[]
+
+  // Cart & Checkout Relations
+  cartItems  CartItem[]
+  savedItems SavedItem[]
+
+  // Order Management Relations
+  orderItems OrderItem[]
+
+  // Audit fields
+  createdBy String? // User ID who created
+  updatedBy String? // User ID who last updated
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([merchantId, sku])
+  @@unique([merchantId, slug])
+  @@index([categoryId])
+  @@index([merchantId])
+  @@index([status])
+  @@index([isActive])
+  @@index([embeddingVersion])
+  @@index([embeddingCreatedAt])
+  @@index([searchScore])
+  @@index([lastSearched])
+  @@index([searchCount])
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Variant identification
+  sku  String @unique
+  name String // e.g., "Red - Large", "128GB"
+
+  // Variant attributes (JSON for flexibility)
+  attributes String // JSON: {"color": "Red", "size": "Large", "capacity": "128GB"}
+
+  // Variant-specific pricing
+  price     Decimal?
+  costPrice Decimal?
+
+  // Variant-specific details
+  weight  Decimal?
+  barcode String?
+  mpn     String?
+
+  // Variant media
+  images String[] // Variant-specific images
+
+  // Inventory and ordering
+  minimumOrderQuantity Int? @default(1)
+  orderMultiple        Int? @default(1)
+
+  // Status
+  isActive  Boolean @default(true)
+  isDefault Boolean @default(false) // One variant per product should be default
+
+  // Relations
+  inventoryItems InventoryItem[]
+
+  // Cart & Checkout Relations
+  cartItems  CartItem[]
+  savedItems SavedItem[]
+
+  // Order Management Relations
+  orderItems OrderItem[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductAttributeTemplate {
+  id          String  @id @default(uuid())
+  name        String
+  displayName String?
+  description String?
+
+  // Attribute configuration
+  type         AttributeType @default(TEXT) // TEXT, NUMBER, BOOLEAN, SELECT, MULTI_SELECT
+  isRequired   Boolean       @default(false)
+  isFilterable Boolean       @default(false)
+  isVariant    Boolean       @default(false) // Can this attribute be used for variants?
+
+  // For SELECT/MULTI_SELECT types
+  options String[] // JSON array of possible values
+
+  // Validation rules (JSON)
+  validation String? // {"min": 0, "max": 100, "pattern": "^[0-9]+$"}
+
+  // Category association
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  // Display configuration
+  sortOrder Int?    @default(0)
+  unit      String? // e.g., "cm", "kg", "GB"
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Audit fields
+  createdBy String? // Admin user ID
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name])
+  @@map("product_attribute_templates")
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  PUBLISHED
+  DISCONTINUED
+}
+
+enum AttributeType {
+  TEXT
+  NUMBER
+  BOOLEAN
+  SELECT
+  MULTI_SELECT
+  DATE
+  URL
+  EMAIL
+}
+
+// ==================== INVENTORY MANAGEMENT MODELS ====================
+
+model Warehouse {
+  id          String  @id @default(uuid())
+  name        String
+  code        String  @unique // e.g., "WH-NYC-01"
+  description String?
+
+  // Location details
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  postalCode   String
+  country      String
+
+  // Warehouse properties
+  type     WarehouseType @default(PHYSICAL) // PHYSICAL, VIRTUAL, DROPSHIP
+  isActive Boolean       @default(true)
+  capacity Int? // Maximum capacity in units
+
+  // Hierarchy support
+  parentId String?
+  parent   Warehouse?  @relation("WarehouseHierarchy", fields: [parentId], references: [id])
+  children Warehouse[] @relation("WarehouseHierarchy")
+
+  // Merchant relationship (null for system warehouses)
+  merchantId String?
+  merchant   Merchant? @relation(fields: [merchantId], references: [id])
+
+  // Relations
+  inventoryItems       InventoryItem[]
+  sourceMovements      StockMovement[] @relation("SourceMovements")
+  destinationMovements StockMovement[] @relation("DestinationMovements")
+
+  // Order Management Relations
+  fulfillments Fulfillment[]
+  shipments    Shipment[]
+
+  // Audit fields
+  createdBy String?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([merchantId])
+  @@index([type])
+  @@index([isActive])
+  @@map("warehouses")
+}
+
+model InventoryItem {
+  id String @id @default(uuid())
+
+  // Product relationship
+  productId        String
+  product          Product         @relation(fields: [productId], references: [id])
+  productVariantId String?
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  // Warehouse relationship
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+
+  // Stock levels
+  quantityOnHand    Int @default(0) // Physical stock available
+  quantityReserved  Int @default(0) // Stock allocated to pending orders
+  quantityAvailable Int @default(0) // Calculated: onHand - reserved
+  quantityCommitted Int @default(0) // Stock committed but not yet shipped
+
+  // Inventory management
+  minimumStock    Int? @default(0) // Reorder point
+  maximumStock    Int? // Maximum stock level
+  reorderQuantity Int? // Quantity to reorder
+  leadTimeDays    Int? // Lead time for replenishment
+
+  // Cost tracking
+  averageCost      Decimal?  @default(0) // Weighted average cost
+  lastPurchaseCost Decimal? // Most recent purchase cost
+  lastPurchaseDate DateTime? // Date of last purchase
+
+  // Batch/Lot tracking
+  batchNumber       String?
+  expirationDate    DateTime?
+  manufacturingDate DateTime?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Relations
+  stockMovements StockMovement[]
+  pricingRules   InventoryPricingRule[]
+
+  // Order Management Relations
+  fulfillmentItems FulfillmentItem[]
+
+  // Audit fields
+  lastCountDate DateTime?
+  lastCountBy   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([productId, productVariantId, warehouseId, batchNumber])
+  @@index([warehouseId])
+  @@index([productId])
+  @@index([quantityAvailable])
+  @@index([minimumStock])
+  @@map("inventory_items")
+}
+
+model StockMovement {
+  id String @id @default(uuid())
+
+  // Inventory relationship
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  // Movement details
+  type       StockMovementType
+  reason     String? // Free text reason
+  reasonCode String? // Standardized reason code
+  reference  String? // Reference to order, transfer, etc.
+
+  // Quantity changes
+  quantityBefore Int
+  quantityChange Int // Positive for increases, negative for decreases
+  quantityAfter  Int
+
+  // Cost tracking
+  unitCost  Decimal?
+  totalCost Decimal?
+
+  // Source/Destination (for transfers)
+  sourceWarehouseId      String?
+  sourceWarehouse        Warehouse? @relation("SourceMovements", fields: [sourceWarehouseId], references: [id])
+  destinationWarehouseId String?
+  destinationWarehouse   Warehouse? @relation("DestinationMovements", fields: [destinationWarehouseId], references: [id])
+
+  // Related entities
+  orderId    String? // Related order if applicable
+  transferId String? // Related transfer if applicable
+
+  // Audit fields
+  performedBy String
+  performedAt DateTime @default(now())
+  notes       String?
+
+  @@index([inventoryItemId])
+  @@index([type])
+  @@index([performedAt])
+  @@index([orderId])
+  @@map("stock_movements")
+}
+
+model InventoryPricingRule {
+  id String @id @default(uuid())
+
+  // Inventory relationship
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  // Rule configuration
+  name        String
+  description String?
+  priority    Int     @default(0) // Higher priority = applied first
+
+  // Quantity-based pricing
+  minimumQuantity Int  @default(1)
+  maximumQuantity Int? // Null = no maximum
+
+  // Pricing
+  priceAdjustment Decimal // Amount to adjust price
+  adjustmentType  PriceAdjustmentType // FIXED, PERCENTAGE, MARKUP, DISCOUNT
+
+  // Stock level conditions
+  minimumStockLevel Int? // Only apply when stock above this level
+  maximumStockLevel Int? // Only apply when stock below this level
+
+  // Date range
+  validFrom DateTime?
+  validTo   DateTime?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Audit fields
+  createdBy String?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inventoryItemId])
+  @@index([minimumQuantity])
+  @@index([priority])
+  @@index([isActive])
+  @@map("inventory_pricing_rules")
+}
+
+enum WarehouseType {
+  PHYSICAL // Traditional warehouse
+  VIRTUAL // Consolidated view
+  DROPSHIP // Vendor-managed
+  CONSIGNMENT // Consignment stock
+}
+
+enum StockMovementType {
+  RECEIPT // Goods received
+  SHIPMENT // Goods shipped
+  ADJUSTMENT // Manual adjustment
+  TRANSFER // Between warehouses
+  RESERVATION // Stock reserved
+  RELEASE // Reservation released
+  CYCLE_COUNT // Cycle count adjustment
+  DAMAGE // Damaged goods
+  RETURN // Customer return
+  WRITE_OFF // Inventory write-off
+}
+
+enum PriceAdjustmentType {
+  FIXED // Fixed price
+  PERCENTAGE // Percentage discount/markup
+  MARKUP // Cost plus markup
+  DISCOUNT // Discount amount
+}
+
+// ==================== SEARCH & DISCOVERY MODELS ====================
+
+model SearchAnalytics {
+  id String @id @default(uuid())
+
+  // Search details
+  searchTerm String
+  searchType SearchType @default(FULL_TEXT) // FULL_TEXT, SKU, CATEGORY, FILTER
+  filters    String? // JSON of applied filters
+
+  // Results
+  resultCount   Int     @default(0)
+  clickedResult String? // Product ID that was clicked
+
+  // User context
+  userId    String?
+  sessionId String
+  userAgent String?
+  ipAddress String?
+
+  // Merchant context
+  merchantId String?
+
+  // Metadata
+  executionTime Int? // Search execution time in ms
+  searchAt      DateTime @default(now())
+
+  @@index([searchTerm])
+  @@index([searchAt])
+  @@index([merchantId])
+  @@index([userId])
+  @@map("search_analytics")
+}
+
+model SavedSearch {
+  id String @id @default(uuid())
+
+  // User relationship
+  userId String
+
+  // Search details
+  name       String // User-defined name for the search
+  searchTerm String?
+  filters    String // JSON of search filters and parameters
+
+  // Notification settings
+  alertOnNewResults  Boolean @default(false)
+  alertOnPriceChange Boolean @default(false)
+
+  // Metadata
+  lastExecuted DateTime?
+  resultCount  Int?      @default(0)
+  isActive     Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("saved_searches")
+}
+
+enum SearchType {
+  FULL_TEXT
+  SKU
+  CATEGORY
+  SPECIFICATION
+  FILTERED
+  COMPARISON
+}
+
+// ==================== RFQ & QUOTE MANAGEMENT MODELS ====================
+
+model RFQ {
+  id String @id @default(uuid())
+
+  // Basic Information
+  rfqNumber   String  @unique // Auto-generated RFQ number
+  title       String
+  description String?
+
+  // Requester Information
+  requesterId String // User who created the RFQ
+  requester   User     @relation(fields: [requesterId], references: [id])
+  companyId   String? // Company making the request
+  company     Company? @relation(fields: [companyId], references: [id])
+
+  // Request Details
+  urgencyLevel     UrgencyLevel @default(NORMAL)
+  expectedDelivery DateTime? // When products are needed
+  deliveryLocation String? // Delivery address
+
+  // Status & Workflow
+  status      RFQStatus @default(DRAFT)
+  submittedAt DateTime? // When RFQ was submitted
+  deadline    DateTime? // Quote submission deadline
+
+  // Requirements
+  requirements String? // Additional requirements (JSON)
+  attachments  String[] // File URLs for attachments
+
+  // Metadata
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  items    RFQItem[]
+  quotes   Quote[]
+  comments RFQComment[]
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([deadline])
+  @@map("rfqs")
+}
+
+model RFQItem {
+  id String @id @default(uuid())
+
+  // RFQ Reference
+  rfqId String
+  rfq   RFQ    @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+
+  // Product Information
+  productId String? // Reference to existing product
+  product   Product? @relation(fields: [productId], references: [id])
+
+  // Custom Product Details (if not in catalog)
+  customProductName String? // For products not in catalog
+  customSku         String? // Custom SKU/part number
+  category          String? // Product category
+  brand             String? // Preferred brand
+  model             String? // Product model
+
+  // Specifications
+  specifications   String // JSON object with detailed specs
+  technicalDrawing String? // URL to technical drawing
+
+  // Quantity & Pricing
+  quantities  Int[] // Array of quantity tiers [100, 500, 1000]
+  targetPrice Decimal? // Target unit price
+  budgetRange String? // Budget range (e.g., "$10K-$15K")
+
+  // Requirements
+  deliveryDate     DateTime? // Required delivery date
+  qualityStandards String? // Quality/certification requirements
+
+  // Metadata
+  notes    String? // Additional notes
+  priority Int     @default(1) // Item priority within RFQ
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  quoteItems QuoteItem[]
+
+  @@index([rfqId])
+  @@index([productId])
+  @@map("rfq_items")
+}
+
+model Quote {
+  id String @id @default(uuid())
+
+  // Quote Information
+  quoteNumber String @unique // Auto-generated quote number
+  rfqId       String
+  rfq         RFQ    @relation(fields: [rfqId], references: [id])
+
+  // Merchant Information
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
+
+  // Quote Details
+  totalAmount Decimal  @db.Decimal(15, 2)
+  currency    String   @default("USD")
+  validUntil  DateTime // Quote expiration date
+
+  // Terms & Conditions
+  paymentTerms  String? // Payment terms
+  deliveryTerms String? // Delivery terms
+  warrantyTerms String? // Warranty information
+  leadTime      Int? // Lead time in days
+
+  // Status & Workflow
+  status      QuoteStatus @default(DRAFT)
+  submittedAt DateTime? // When quote was submitted
+  respondedAt DateTime? // When merchant responded to RFQ
+
+  // Pricing & Discounts
+  subtotal       Decimal  @db.Decimal(15, 2)
+  discountAmount Decimal? @db.Decimal(15, 2)
+  taxAmount      Decimal? @db.Decimal(15, 2)
+  shippingAmount Decimal? @db.Decimal(15, 2)
+
+  // Additional Information
+  notes         String? // Internal notes
+  customerNotes String? // Notes visible to customer
+  attachments   String[] // Supporting documents
+
+  // Metadata
+  version       Int     @default(1) // Quote version for revisions
+  parentQuoteId String? // Reference to previous version
+  parentQuote   Quote?  @relation("QuoteRevisions", fields: [parentQuoteId], references: [id])
+  revisions     Quote[] @relation("QuoteRevisions")
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  items    QuoteItem[]
+  comments QuoteComment[]
+
+  // Order Management Relations
+  orders Order[]
+
+  @@index([rfqId])
+  @@index([merchantId])
+  @@index([status])
+  @@index([validUntil])
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id String @id @default(uuid())
+
+  // Quote Reference
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  // RFQ Item Reference
+  rfqItemId String
+  rfqItem   RFQItem @relation(fields: [rfqItemId], references: [id])
+
+  // Product Information
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  // Pricing per quantity tier
+  quantityPricing String // JSON: {quantity: number, unitPrice: number, totalPrice: number}[]
+
+  // Item Details
+  description    String? // Item description
+  specifications String? // JSON specifications
+  leadTime       Int? // Item-specific lead time
+
+  // Alternatives
+  suggestedAlternatives String? // JSON array of alternative products
+
+  // Metadata
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([quoteId])
+  @@index([rfqItemId])
+  @@index([productId])
+  @@map("quote_items")
+}
+
+model RFQComment {
+  id String @id @default(uuid())
+
+  rfqId String
+  rfq   RFQ    @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  content     String
+  isInternal  Boolean  @default(false) // Internal comments not visible to requesters
+  attachments String[] // File attachments
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([rfqId])
+  @@index([authorId])
+  @@map("rfq_comments")
+}
+
+model QuoteComment {
+  id String @id @default(uuid())
+
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  content     String
+  isInternal  Boolean  @default(false)
+  attachments String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([quoteId])
+  @@index([authorId])
+  @@map("quote_comments")
+}
+
+// RFQ & Quote Enums
+enum RFQStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  QUOTES_RECEIVED
+  QUOTES_COMPARED
+  QUOTE_SELECTED
+  NEGOTIATING
+  APPROVED
+  CONVERTED
+  EXPIRED
+  CANCELLED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+  ACCEPTED
+  COUNTER_OFFERED
+  WITHDRAWN
+}
+
+enum UrgencyLevel {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+// ==================== CART & CHECKOUT MODELS ====================
+
+model Cart {
+  id String @id @default(uuid())
+
+  // Owner information
+  userId    String? // Null for guest carts
+  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String? // For guest carts
+
+  // Company context
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  // Cart metadata
+  name     String? // Named carts for collaborative purchasing
+  isActive Boolean @default(true)
+  isGuest  Boolean @default(false)
+
+  // Pricing context
+  currency String @default("USD")
+
+  // Checkout context
+  shippingAddressId String?
+  billingAddressId  String?
+
+  // Relations
+  items     CartItem[]
+  checkouts Checkout[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime? // For guest carts
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([companyId])
+  @@map("carts")
+}
+
+model CartItem {
+  id String @id @default(uuid())
+
+  // Cart reference
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  // Product information
+  productId        String?
+  product          Product?        @relation(fields: [productId], references: [id])
+  productVariantId String?
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  // Custom product (for quote-derived items)
+  customProductName String?
+  customSku         String?
+  customDescription String?
+
+  // Quantity and pricing
+  quantity      Int
+  unitPrice     Decimal  @db.Decimal(15, 2)
+  totalPrice    Decimal  @db.Decimal(15, 2)
+  originalPrice Decimal? @db.Decimal(15, 2) // For tracking discounts
+
+  // Source tracking
+  sourceType CartItemSource @default(MANUAL)
+  sourceId   String? // Quote ID, previous order ID, etc.
+
+  // B2B specific
+  requiredByDate DateTime?
+  notes          String?
+  isApproved     Boolean   @default(false)
+  approvedBy     String? // User ID who approved
+  approvedAt     DateTime?
+
+  // Status
+  status              CartItemStatus @default(ACTIVE)
+  isAvailable         Boolean        @default(true)
+  availabilityMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cartId])
+  @@index([productId])
+  @@index([status])
+  @@map("cart_items")
+}
+
+model Address {
+  id String @id @default(uuid())
+
+  // Owner information
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  // Address details
+  type         AddressType // BILLING, SHIPPING, BOTH
+  name         String // Address nickname
+  contactName  String
+  contactPhone String?
+  contactEmail String?
+
+  // Address components
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  postalCode   String
+  country      String  @default("US")
+
+  // Business details
+  isDefault Boolean @default(false)
+  isActive  Boolean @default(true)
+
+  // Delivery instructions
+  deliveryInstructions String?
+  accessCodes          String?
+  businessHours        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  shippingCheckouts Checkout[] @relation("ShippingAddress")
+  billingCheckouts  Checkout[] @relation("BillingAddress")
+
+  // Order Management Relations
+  orderShippingAddresses Order[] @relation("OrderShippingAddress")
+  orderBillingAddresses  Order[] @relation("OrderBillingAddress")
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([type])
+  @@map("addresses")
+}
+
+model Checkout {
+  id String @id @default(uuid())
+
+  // Cart reference
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id])
+
+  // Customer information
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  // Addresses
+  shippingAddressId String
+  shippingAddress   Address @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String
+  billingAddress    Address @relation("BillingAddress", fields: [billingAddressId], references: [id])
+
+  // Payment information
+  paymentMethod       PaymentMethod
+  paymentDetails      String? // Encrypted payment details
+  purchaseOrderNumber String? // For corporate purchases
+
+  // Pricing
+  subtotal       Decimal @db.Decimal(15, 2)
+  taxAmount      Decimal @db.Decimal(15, 2)
+  shippingAmount Decimal @db.Decimal(15, 2)
+  discountAmount Decimal @default(0) @db.Decimal(15, 2)
+  totalAmount    Decimal @db.Decimal(15, 2)
+  currency       String  @default("USD")
+
+  // Status and workflow
+  status           CheckoutStatus @default(PENDING)
+  requiresApproval Boolean        @default(false)
+  approvalStatus   ApprovalStatus @default(NONE)
+
+  // Approval workflow
+  approvalRequestedAt DateTime?
+  approvalRequestedBy String?
+  approvedAt          DateTime?
+  approvedBy          String?
+  rejectedAt          DateTime?
+  rejectedBy          String?
+  rejectionReason     String?
+
+  // Delivery preferences
+  preferredDeliveryDate DateTime?
+  deliveryInstructions  String?
+  shippingMethod        String?
+
+  // Order notes
+  customerNotes String?
+  internalNotes String?
+
+  // Integration
+  orderId         String? // Created order ID when checkout completes
+  paymentIntentId String? // Stripe payment intent ID
+
+  // Order Management Relations
+  order Order?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([cartId])
+  @@index([status])
+  @@index([approvalStatus])
+  @@map("checkouts")
+}
+
+model SavedItem {
+  id String @id @default(uuid())
+
+  // Owner information
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Product information
+  productId        String?
+  product          Product?        @relation(fields: [productId], references: [id])
+  productVariantId String?
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  // Saved item details
+  name       String? // Custom name for the saved item
+  notes      String?
+  quantity   Int      @default(1)
+  savedPrice Decimal? @db.Decimal(15, 2) // Price when saved
+
+  // Organization
+  listName String? // Saved to specific list
+  tags     String[] // For organization
+
+  // Status
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+  @@map("saved_items")
+}
+
+// Cart & Checkout Enums
+enum CartItemSource {
+  MANUAL // Added manually by user
+  QUOTE // Added from accepted quote
+  PREVIOUS_ORDER // Added from previous order
+  BULK_UPLOAD // Added via bulk upload
+  SAVED_LIST // Added from saved list
+}
+
+enum CartItemStatus {
+  ACTIVE // In active cart
+  SAVED // Moved to saved for later
+  REMOVED // Removed from cart
+  ORDERED // Converted to order
+}
+
+enum AddressType {
+  BILLING
+  SHIPPING
+  BOTH
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  CORPORATE_ACCOUNT
+  PURCHASE_ORDER
+  ACH_TRANSFER
+  NET_TERMS
+  WIRE_TRANSFER
+}
+
+enum CheckoutStatus {
+  PENDING // Checkout in progress
+  PENDING_APPROVAL // Waiting for approval
+  APPROVED // Approved, ready for payment
+  REJECTED // Approval rejected
+  PROCESSING // Payment processing
+  COMPLETED // Successfully completed
+  FAILED // Payment failed
+  CANCELLED // Cancelled by user
+}
+
+enum ApprovalStatus {
+  NONE // No approval required
+  PENDING // Approval requested
+  APPROVED // Approved by authority
+  REJECTED // Rejected by authority
+  ESCALATED // Escalated to higher authority
+}
+
+// ==================== ORDER MANAGEMENT MODELS ====================
+
+model Order {
+  id String @id @default(uuid())
+
+  // Order identification
+  orderNumber         String  @unique // Human-readable order number (e.g., HW-2024-000001)
+  purchaseOrderNumber String? // Customer PO number
+
+  // Customer information
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  // Source tracking
+  checkoutId String?   @unique
+  checkout   Checkout? @relation(fields: [checkoutId], references: [id])
+  quoteId    String?
+  quote      Quote?    @relation(fields: [quoteId], references: [id])
+
+  // Addresses
+  shippingAddressId String
+  shippingAddress   Address @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String
+  billingAddress    Address @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
+
+  // Order totals
+  subtotal       Decimal @db.Decimal(15, 2)
+  taxAmount      Decimal @db.Decimal(15, 2)
+  shippingAmount Decimal @db.Decimal(15, 2)
+  discountAmount Decimal @default(0) @db.Decimal(15, 2)
+  totalAmount    Decimal @db.Decimal(15, 2)
+  currency       String  @default("USD")
+
+  // Status and workflow
+  status            OrderStatus       @default(PENDING)
+  fulfillmentStatus FulfillmentStatus @default(PENDING)
+  paymentStatus     PaymentStatus     @default(PENDING)
+
+  // Business details
+  requestedDeliveryDate DateTime?
+  estimatedDeliveryDate DateTime?
+  actualDeliveryDate    DateTime?
+
+  // Order metadata
+  customerNotes       String?
+  internalNotes       String?
+  specialInstructions String?
+  rushOrder           Boolean @default(false)
+
+  // Payment information
+  paymentMethod    PaymentMethod
+  paymentReference String? // Payment processor reference
+  creditTerms      String? // Net 30, etc.
+
+  // Relations
+  items        OrderItem[]
+  fulfillments Fulfillment[]
+  shipments    Shipment[]
+  invoices     Invoice[]
+  orderEvents  OrderEvent[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  confirmedAt DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([status])
+  @@index([orderNumber])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id String @id @default(uuid())
+
+  // Order reference
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Product information
+  productId        String?
+  product          Product?        @relation(fields: [productId], references: [id])
+  productVariantId String?
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  // Custom product details (for quote-derived items)
+  customProductName String?
+  customSku         String?
+  customDescription String?
+
+  // Product snapshot at time of order (preserves original product data)
+  productSnapshot Json? // Complete product data at time of order
+  variantSnapshot Json? // Complete variant data at time of order
+
+  // Snapshot metadata
+  snapshotCreatedAt DateTime? // When the snapshot was taken
+  productName       String // Product name at time of order
+  productSku        String // Product SKU at time of order
+  productBrand      String? // Product brand at time of order
+  productCategory   String? // Product category at time of order
+  productImages     String[] // Product images at time of order
+
+  // Variant snapshot fields (if applicable)
+  variantName       String? // Variant name at time of order
+  variantSku        String? // Variant SKU at time of order  
+  variantAttributes Json? // Variant attributes at time of order
+
+  // Order details
+  quantity   Int
+  unitPrice  Decimal @db.Decimal(15, 2)
+  totalPrice Decimal @db.Decimal(15, 2)
+
+  // Fulfillment tracking
+  quantityFulfilled Int @default(0)
+  quantityShipped   Int @default(0)
+  quantityDelivered Int @default(0)
+  quantityCancelled Int @default(0)
+
+  // Item-specific details
+  requestedDeliveryDate DateTime?
+  estimatedDeliveryDate DateTime?
+  itemNotes             String?
+
+  // Relations
+  fulfillmentItems FulfillmentItem[]
+  shipmentItems    ShipmentItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model Fulfillment {
+  id String @id @default(uuid())
+
+  // Fulfillment identification
+  fulfillmentNumber String @unique // Human-readable fulfillment number
+
+  // Order reference
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  // Warehouse information
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+
+  // Status and workflow
+  status   FulfillmentStatus   @default(PENDING)
+  priority FulfillmentPriority @default(NORMAL)
+
+  // Fulfillment dates
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  // Picker information
+  assignedTo   String? // User ID of assigned picker
+  assignedUser User?   @relation(fields: [assignedTo], references: [id])
+
+  // Notes and instructions
+  pickingNotes String?
+  packingNotes String?
+
+  // Relations
+  items     FulfillmentItem[]
+  shipments Shipment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([warehouseId])
+  @@index([status])
+  @@map("fulfillments")
+}
+
+model FulfillmentItem {
+  id String @id @default(uuid())
+
+  // References
+  fulfillmentId String
+  fulfillment   Fulfillment @relation(fields: [fulfillmentId], references: [id], onDelete: Cascade)
+  orderItemId   String
+  orderItem     OrderItem   @relation(fields: [orderItemId], references: [id])
+
+  // Quantities
+  quantityAllocated Int
+  quantityPicked    Int @default(0)
+  quantityPacked    Int @default(0)
+
+  // Inventory tracking
+  inventoryItemId String?
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+
+  // Status
+  status FulfillmentItemStatus @default(ALLOCATED)
+
+  // Notes
+  pickingNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fulfillmentId])
+  @@index([orderItemId])
+  @@map("fulfillment_items")
+}
+
+model Shipment {
+  id String @id @default(uuid())
+
+  // Shipment identification
+  shipmentNumber String  @unique
+  trackingNumber String?
+
+  // References
+  orderId       String
+  order         Order        @relation(fields: [orderId], references: [id])
+  fulfillmentId String?
+  fulfillment   Fulfillment? @relation(fields: [fulfillmentId], references: [id])
+
+  // Shipping details
+  carrierId      String?
+  carrier        ShippingCarrier? @relation(fields: [carrierId], references: [id])
+  shippingMethod String
+  shippingCost   Decimal          @db.Decimal(15, 2)
+
+  // Addresses
+  fromWarehouseId String
+  fromWarehouse   Warehouse @relation(fields: [fromWarehouseId], references: [id])
+  toAddress       Json // Shipping address as JSON
+
+  // Status and dates
+  status            ShipmentStatus @default(PREPARING)
+  shippedAt         DateTime?
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+
+  // Package details
+  weight       Decimal? @db.Decimal(10, 2)
+  dimensions   Json? // {length, width, height}
+  packageCount Int      @default(1)
+
+  // Tracking and delivery
+  trackingEvents    Json[] // Array of tracking events
+  deliverySignature String?
+  deliveryPhoto     String? // URL to delivery photo
+
+  // Relations
+  items ShipmentItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([trackingNumber])
+  @@index([status])
+  @@map("shipments")
+}
+
+model ShipmentItem {
+  id String @id @default(uuid())
+
+  // References
+  shipmentId  String
+  shipment    Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+
+  // Quantities
+  quantityShipped Int
+
+  createdAt DateTime @default(now())
+
+  @@index([shipmentId])
+  @@index([orderItemId])
+  @@map("shipment_items")
+}
+
+model ShippingCarrier {
+  id String @id @default(uuid())
+
+  // Carrier details
+  name        String  @unique // UPS, FedEx, DHL, etc.
+  code        String  @unique // ups, fedex, dhl
+  website     String?
+  trackingUrl String? // URL template for tracking
+
+  // Configuration
+  isActive    Boolean @default(true)
+  apiKey      String? // Encrypted API key
+  apiEndpoint String?
+
+  // Supported services
+  services Json[] // Array of shipping service configurations
+
+  // Relations
+  shipments Shipment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("shipping_carriers")
+}
+
+model Invoice {
+  id String @id @default(uuid())
+
+  // Invoice identification
+  invoiceNumber String @unique
+
+  // Order reference
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  // Customer information
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  // Invoice details
+  subtotal    Decimal @db.Decimal(15, 2)
+  taxAmount   Decimal @db.Decimal(15, 2)
+  totalAmount Decimal @db.Decimal(15, 2)
+  currency    String  @default("USD")
+
+  // Status and dates
+  status   InvoiceStatus @default(DRAFT)
+  issuedAt DateTime?
+  dueAt    DateTime?
+  paidAt   DateTime?
+
+  // Payment tracking
+  paymentMethod    PaymentMethod?
+  paymentReference String?
+
+  // File references
+  pdfUrl String? // URL to PDF invoice
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([invoiceNumber])
+  @@map("invoices")
+}
+
+model OrderEvent {
+  id String @id @default(uuid())
+
+  // Order reference
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Event details
+  eventType   OrderEventType
+  description String
+
+  // User tracking
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  // Additional data
+  metadata Json? // Additional event data
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("order_events")
+}
+
+// Order Management Enums
+enum OrderStatus {
+  PENDING // Order created, awaiting confirmation
+  CONFIRMED // Order confirmed, ready for fulfillment
+  PROCESSING // Order being processed/fulfilled
+  PARTIALLY_SHIPPED // Some items shipped
+  SHIPPED // All items shipped
+  DELIVERED // Order delivered
+  CANCELLED // Order cancelled
+  RETURNED // Order returned
+  REFUNDED // Order refunded
+}
+
+enum FulfillmentStatus {
+  PENDING // Awaiting fulfillment
+  ALLOCATED // Inventory allocated
+  PICKING // Items being picked
+  PICKED // Items picked, ready for packing
+  PACKING // Items being packed
+  PACKED // Items packed, ready for shipping
+  SHIPPED // Items shipped
+  COMPLETED // Fulfillment completed
+  CANCELLED // Fulfillment cancelled
+}
+
+enum PaymentStatus {
+  PENDING // Payment pending
+  AUTHORIZED // Payment authorized
+  CAPTURED // Payment captured
+  FAILED // Payment failed
+  REFUNDED // Payment refunded
+  CANCELLED // Payment cancelled
+}
+
+enum FulfillmentPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+  RUSH
+}
+
+enum FulfillmentItemStatus {
+  ALLOCATED // Inventory allocated
+  PICKED // Item picked
+  PACKED // Item packed
+  SHIPPED // Item shipped
+  CANCELLED // Item cancelled
+}
+
+enum ShipmentStatus {
+  PREPARING // Preparing for shipment
+  READY // Ready to ship
+  SHIPPED // Shipped
+  IN_TRANSIT // In transit
+  OUT_FOR_DELIVERY // Out for delivery
+  DELIVERED // Delivered
+  FAILED_DELIVERY // Failed delivery attempt
+  RETURNED // Returned to sender
+  LOST // Lost in transit
+}
+
+enum InvoiceStatus {
+  DRAFT // Invoice draft
+  SENT // Invoice sent
+  PAID // Invoice paid
+  OVERDUE // Invoice overdue
+  CANCELLED // Invoice cancelled
+  REFUNDED // Invoice refunded
+}
+
+enum OrderEventType {
+  ORDER_CREATED // Order created
+  ORDER_CONFIRMED // Order confirmed
+  ORDER_MODIFIED // Order modified
+  ORDER_CANCELLED // Order cancelled
+  PAYMENT_RECEIVED // Payment received
+  PAYMENT_FAILED // Payment failed
+  INVENTORY_ALLOCATED // Inventory allocated
+  FULFILLMENT_STARTED // Fulfillment started
+  ITEMS_PICKED // Items picked
+  ITEMS_PACKED // Items packed
+  SHIPMENT_CREATED // Shipment created
+  SHIPMENT_SHIPPED // Shipment shipped
+  SHIPMENT_DELIVERED // Shipment delivered
+  INVOICE_GENERATED // Invoice generated
+  REFUND_PROCESSED // Refund processed
+  CUSTOMER_CONTACTED // Customer contacted
+  EXCEPTION_OCCURRED // Exception occurred
+}
+
+// ============ NOTIFICATION & COMMUNICATION ENUMS ============
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  SMS
+  PUSH
+  WEBHOOK
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  CANCELLED
+}
+
+enum NotificationCategory {
+  SYSTEM
+  ORDER
+  INVENTORY
+  MERCHANT
+  USER
+  SECURITY
+  PROMOTION
+  REMINDER
+  ALERT
+}
+
+enum EmailTemplateType {
+  WELCOME
+  VERIFICATION
+  PASSWORD_RESET
+  ORDER_CONFIRMATION
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  INVOICE_READY
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  MERCHANT_APPROVED
+  MERCHANT_REJECTED
+  PRODUCT_APPROVED
+  PRODUCT_REJECTED
+  LOW_STOCK_ALERT
+  PRICE_CHANGE
+  QUOTE_REQUEST
+  QUOTE_RECEIVED
+  RFQ_SUBMITTED
+  RFQ_RESPONSE
+  CART_ABANDONED
+  BULK_ORDER_READY
+  SHIPMENT_DELAYED
+  APPROVAL_REQUIRED
+  APPROVAL_GRANTED
+  APPROVAL_DENIED
+  SYSTEM_MAINTENANCE
+  SECURITY_ALERT
+}
+
+enum EventType {
+  USER_REGISTERED
+  USER_LOGIN
+  USER_LOGOUT
+  ORDER_CREATED
+  ORDER_CONFIRMED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  PAYMENT_PROCESSED
+  PAYMENT_FAILED
+  INVENTORY_LOW
+  INVENTORY_OUT
+  PRODUCT_CREATED
+  PRODUCT_UPDATED
+  PRODUCT_APPROVED
+  PRODUCT_REJECTED
+  MERCHANT_APPLIED
+  MERCHANT_APPROVED
+  MERCHANT_REJECTED
+  QUOTE_REQUESTED
+  QUOTE_SUBMITTED
+  RFQ_CREATED
+  RFQ_RESPONDED
+  CART_ABANDONED
+  PRICE_CHANGED
+  SYSTEM_ERROR
+  SECURITY_BREACH
+}
+
+// ============ NOTIFICATION & COMMUNICATION MODELS ============
+
+model NotificationTemplate {
+  id       String               @id @default(uuid())
+  name     String               @unique // Template identifier
+  type     EmailTemplateType
+  category NotificationCategory
+
+  // Template content
+  subject   String
+  bodyText  String // Plain text version
+  bodyHtml  String // HTML version
+  variables Json? // Available template variables
+
+  // Metadata
+  description String?
+  isActive    Boolean @default(true)
+  version     Int     @default(1)
+
+  // Relations
+  notifications     Notification[]
+  notificationRules NotificationRule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notification_templates")
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  // Notification content
+  title   String
+  message String
+  data    Json? // Additional data payload
+
+  // Classification
+  channel  NotificationChannel
+  category NotificationCategory
+  priority NotificationPriority @default(NORMAL)
+
+  // Status tracking
+  status        NotificationStatus @default(PENDING)
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  readAt        DateTime?
+  failureReason String?
+  retryCount    Int                @default(0)
+  maxRetries    Int                @default(3)
+
+  // Recipients
+  recipientId    String? // User ID
+  recipient      User?   @relation(fields: [recipientId], references: [id])
+  recipientEmail String? // For external notifications
+  recipientPhone String? // For SMS notifications
+
+  // Template reference
+  templateId String?
+  template   NotificationTemplate? @relation(fields: [templateId], references: [id])
+
+  // Event reference
+  eventId   String?
+  eventType EventType?
+
+  // Scheduling
+  scheduledFor DateTime? // For delayed notifications
+  expiresAt    DateTime? // Notification expiration
+
+  // Grouping
+  groupId String? // For grouping related notifications
+
+  // Relations
+  emailQueue EmailQueue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recipientId])
+  @@index([status])
+  @@index([channel])
+  @@index([scheduledFor])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id String @id @default(uuid())
+
+  // User reference
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Preference settings
+  category NotificationCategory
+  channels NotificationChannel[] // Preferred channels for this category
+
+  // Channel-specific settings
+  emailEnabled Boolean @default(true)
+  smsEnabled   Boolean @default(false)
+  pushEnabled  Boolean @default(true)
+  inAppEnabled Boolean @default(true)
+
+  // Timing preferences
+  quietHoursStart String? // "22:00"
+  quietHoursEnd   String? // "08:00"
+  timezone        String? // User timezone
+
+  // Frequency settings
+  emailDigest     Boolean @default(false) // Receive email digest instead of individual emails
+  digestFrequency String? // "daily", "weekly"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, category])
+  @@map("notification_preferences")
+}
+
+model SystemEvent {
+  id String @id @default(uuid())
+
+  // Event details
+  type        EventType
+  title       String
+  description String?
+  data        Json? // Event-specific data
+
+  // Context
+  userId     String? // User who triggered the event
+  user       User?   @relation(fields: [userId], references: [id])
+  merchantId String? // Related merchant
+  orderId    String? // Related order
+  productId  String? // Related product
+
+  // Metadata
+  severity  NotificationPriority @default(NORMAL)
+  source    String? // System component that generated the event
+  ipAddress String?
+  userAgent String?
+
+  // Processing
+  processed   Boolean   @default(false)
+  processedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([processed])
+  @@map("system_events")
+}
+
+model NotificationRule {
+  id String @id @default(uuid())
+
+  // Rule definition
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+
+  // Trigger conditions
+  eventType  EventType
+  conditions Json? // Additional conditions for triggering
+
+  // Target audience
+  targetRoles   String[] // Roles to notify
+  targetUserIds String[] // Specific users to notify
+  targetEmails  String[] // External emails to notify
+
+  // Notification settings
+  templateId String?
+  template   NotificationTemplate? @relation(fields: [templateId], references: [id])
+  channels   NotificationChannel[]
+  priority   NotificationPriority  @default(NORMAL)
+
+  // Scheduling and limits
+  delay        Int? // Delay in minutes before sending
+  cooldownTime Int? // Cooldown period in minutes
+  maxPerDay    Int? // Maximum notifications per day
+  maxPerUser   Int? // Maximum notifications per user per day
+
+  // Metadata
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notification_rules")
+}
+
+model EmailQueue {
+  id String @id @default(uuid())
+
+  // Email details
+  fromEmail String
+  fromName  String?
+  toEmail   String
+  toName    String?
+  subject   String
+  bodyText  String
+  bodyHtml  String?
+
+  // Additional recipients
+  ccEmails  String[]
+  bccEmails String[]
+
+  // Attachments
+  attachments Json[] // Array of attachment objects
+
+  // Status tracking
+  status        NotificationStatus @default(PENDING)
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  openedAt      DateTime?
+  clickedAt     DateTime?
+  bouncedAt     DateTime?
+  failureReason String?
+  retryCount    Int                @default(0)
+  maxRetries    Int                @default(3)
+
+  // Reference
+  notificationId String?
+  notification   Notification? @relation(fields: [notificationId], references: [id])
+
+  // Scheduling
+  scheduledFor DateTime? // For delayed emails
+  expiresAt    DateTime? // Email expiration
+
+  // Provider details
+  provider     String? // "mailgun", "sendgrid", etc.
+  providerId   String? // Provider-specific message ID
+  providerData Json? // Provider-specific data
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([toEmail])
+  @@map("email_queue")
+}
+
+// ============ ANALYTICS & REPORTING ENUMS ============
+
+enum MetricType {
+  SALES_REVENUE
+  ORDER_COUNT
+  USER_REGISTRATIONS
+  PRODUCT_VIEWS
+  SEARCH_QUERIES
+  CONVERSION_RATE
+  CART_ABANDONMENT
+  MERCHANT_PERFORMANCE
+  INVENTORY_TURNOVER
+  CUSTOMER_LIFETIME_VALUE
+  AVERAGE_ORDER_VALUE
+  FULFILLMENT_TIME
+  SHIPPING_COST
+  REFUND_RATE
+  CUSTOMER_SATISFACTION
+}
+
+enum DimensionType {
+  TIME_PERIOD
+  PRODUCT_CATEGORY
+  MERCHANT
+  CUSTOMER_SEGMENT
+  GEOGRAPHIC_REGION
+  USER_ROLE
+  DEVICE_TYPE
+  TRAFFIC_SOURCE
+  PAYMENT_METHOD
+  SHIPPING_METHOD
+}
+
+enum ReportType {
+  SALES_REPORT
+  INVENTORY_REPORT
+  CUSTOMER_REPORT
+  MERCHANT_REPORT
+  PRODUCT_PERFORMANCE
+  FINANCIAL_REPORT
+  OPERATIONAL_REPORT
+  MARKETING_REPORT
+  EXECUTIVE_SUMMARY
+  CUSTOM_REPORT
+}
+
+enum ReportFormat {
+  PDF
+  CSV
+  EXCEL
+  JSON
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DashboardType {
+  EXECUTIVE
+  SALES
+  OPERATIONS
+  MARKETING
+  FINANCE
+  MERCHANT
+  CUSTOMER_SERVICE
+  INVENTORY
+  FULFILLMENT
+  CUSTOM
+}
+
+enum ChartType {
+  LINE
+  BAR
+  PIE
+  AREA
+  SCATTER
+  DONUT
+  GAUGE
+  HEATMAP
+  FUNNEL
+  TABLE
+}
+
+enum TimeGranularity {
+  HOUR
+  DAY
+  WEEK
+  MONTH
+  QUARTER
+  YEAR
+}
+
+// ============ ANALYTICS & REPORTING MODELS ============
+
+model AnalyticsMetric {
+  id String @id @default(uuid())
+
+  // Metric identification
+  name        String
+  type        MetricType
+  description String?
+  unit        String? // e.g., "USD", "count", "percentage"
+
+  // Calculation details
+  formula     String? // SQL or calculation formula
+  dataSource  String? // Source table/view
+  refreshRate Int? // Minutes between updates
+
+  // Metadata
+  isActive   Boolean  @default(true)
+  isRealTime Boolean  @default(false)
+  category   String?
+  tags       String[]
+
+  // Relations
+  dataPoints MetricDataPoint[]
+  dashboards DashboardWidget[]
+  reports    ReportMetric[]
+  alerts     MetricAlert[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, type])
+  @@index([type])
+  @@map("analytics_metrics")
+}
+
+model MetricDataPoint {
+  id String @id @default(uuid())
+
+  // Metric reference
+  metricId String
+  metric   AnalyticsMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  // Data point details
+  value       Decimal         @db.Decimal(15, 4)
+  timestamp   DateTime
+  granularity TimeGranularity
+
+  // Dimensions (for filtering/grouping)
+  dimensions Json? // Key-value pairs for filtering
+
+  // Context
+  userId     String?
+  merchantId String?
+  productId  String?
+  orderId    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([metricId, timestamp])
+  @@index([timestamp])
+  @@index([userId])
+  @@index([merchantId])
+  @@map("metric_data_points")
+}
+
+model Dashboard {
+  id String @id @default(uuid())
+
+  // Dashboard details
+  name        String
+  description String?
+  type        DashboardType
+  layout      Json // Widget layout configuration
+
+  // Access control
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id])
+  isPublic   Boolean  @default(false)
+  sharedWith String[] // User IDs with access
+
+  // Permissions
+  allowedRoles String[] // Roles that can access this dashboard
+
+  // Configuration
+  refreshRate Int?    @default(300) // Seconds
+  timezone    String? @default("UTC")
+  dateRange   Json? // Default date range
+  autoRefresh Boolean @default(false)
+
+  // Metadata
+  isTemplate     Boolean  @default(false)
+  templateSource String? // Source dashboard ID if created from template
+  tags           String[]
+
+  // Relations
+  widgets       DashboardWidget[]
+  subscriptions DashboardSubscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([type])
+  @@map("dashboards")
+}
+
+model DashboardWidget {
+  id String @id @default(uuid())
+
+  // Dashboard reference
+  dashboardId String
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  // Widget details
+  title       String
+  type        ChartType
+  description String?
+
+  // Layout
+  position Json // {x, y, width, height}
+  order    Int  @default(0)
+
+  // Data configuration
+  metricId  String?
+  metric    AnalyticsMetric? @relation(fields: [metricId], references: [id])
+  dataQuery Json? // Custom query configuration
+
+  // Visualization settings
+  chartConfig Json? // Chart-specific configuration
+  filters     Json? // Widget-specific filters
+
+  // Behavior
+  refreshRate Int?    @default(300) // Seconds
+  isVisible   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dashboardId])
+  @@index([metricId])
+  @@map("dashboard_widgets")
+}
+
+model Report {
+  id String @id @default(uuid())
+
+  // Report details
+  name        String
+  description String?
+  type        ReportType
+  format      ReportFormat @default(PDF)
+
+  // Generation details
+  status     ReportStatus @default(PENDING)
+  parameters Json? // Report parameters/filters
+  template   String? // Report template ID
+
+  // Scheduling
+  isScheduled    Boolean @default(false)
+  cronExpression String? // For scheduled reports
+  timezone       String? @default("UTC")
+
+  // Access control
+  createdBy  String
+  creator    User     @relation(fields: [createdBy], references: [id])
+  recipients String[] // Email addresses to send report
+
+  // File information
+  fileName    String?
+  fileSize    Int? // Bytes
+  filePath    String? // Storage path
+  downloadUrl String?
+
+  // Processing info
+  startedAt    DateTime?
+  completedAt  DateTime?
+  errorMessage String?
+
+  // Relations
+  metrics   ReportMetric[]
+  schedules ReportSchedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdBy])
+  @@index([type])
+  @@index([status])
+  @@map("reports")
+}
+
+model ReportMetric {
+  id String @id @default(uuid())
+
+  // References
+  reportId String
+  report   Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  metricId String
+  metric   AnalyticsMetric @relation(fields: [metricId], references: [id])
+
+  // Configuration
+  filters     Json? // Metric-specific filters
+  aggregation String? // SUM, AVG, COUNT, etc.
+  order       Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([reportId, metricId])
+  @@map("report_metrics")
+}
+
+model ReportSchedule {
+  id String @id @default(uuid())
+
+  // Report reference
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  // Schedule details
+  name           String
+  cronExpression String
+  timezone       String  @default("UTC")
+  isActive       Boolean @default(true)
+
+  // Recipients
+  recipients String[] // Email addresses
+  subject    String?
+  message    String?
+
+  // Execution tracking
+  lastRun      DateTime?
+  nextRun      DateTime?
+  runCount     Int       @default(0)
+  failureCount Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reportId])
+  @@index([nextRun])
+  @@map("report_schedules")
+}
+
+model MetricAlert {
+  id String @id @default(uuid())
+
+  // Metric reference
+  metricId String
+  metric   AnalyticsMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  // Alert details
+  name        String
+  description String?
+
+  // Conditions
+  condition  String // e.g., "greater_than", "less_than", "percent_change"
+  threshold  Decimal @db.Decimal(15, 4)
+  timeWindow Int // Minutes to evaluate
+
+  // Notification settings
+  recipients String[] // Email addresses or user IDs
+  channels   String[] // email, slack, webhook, etc.
+  cooldown   Int      @default(60) // Minutes between notifications
+
+  // Status
+  isActive      Boolean   @default(true)
+  lastTriggered DateTime?
+  triggerCount  Int       @default(0)
+
+  // Relations
+  notifications AlertNotification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([metricId])
+  @@index([isActive])
+  @@map("metric_alerts")
+}
+
+model AlertNotification {
+  id String @id @default(uuid())
+
+  // Alert reference
+  alertId String
+  alert   MetricAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  // Notification details
+  triggeredAt DateTime
+  metricValue Decimal  @db.Decimal(15, 4)
+  threshold   Decimal  @db.Decimal(15, 4)
+  message     String
+
+  // Delivery tracking
+  channels       String[] // Channels used
+  delivered      Boolean   @default(false)
+  acknowledged   Boolean   @default(false)
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([alertId])
+  @@index([triggeredAt])
+  @@map("alert_notifications")
+}
+
+model DashboardSubscription {
+  id String @id @default(uuid())
+
+  // Dashboard reference
+  dashboardId String
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  // Subscriber details
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Subscription settings
+  frequency    String // daily, weekly, monthly
+  deliveryTime String? // HH:MM format
+  timezone     String       @default("UTC")
+  format       ReportFormat @default(PDF)
+
+  // Status
+  isActive Boolean   @default(true)
+  lastSent DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dashboardId, userId])
+  @@index([userId])
+  @@map("dashboard_subscriptions")
+}
+
+model AnalyticsSession {
+  id String @id @default(uuid())
+
+  // Session details
+  sessionId String  @unique
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id])
+
+  // Session info
+  ipAddress   String?
+  userAgent   String?
+  deviceType  String?
+  browserType String?
+  platform    String?
+
+  // Geographic info
+  country String?
+  region  String?
+  city    String?
+
+  // Session tracking
+  startTime  DateTime
+  endTime    DateTime?
+  duration   Int? // Seconds
+  pageViews  Int       @default(0)
+  eventCount Int       @default(0)
+
+  // E-commerce tracking
+  merchantId String?
+  orderId    String?
+  revenue    Decimal? @db.Decimal(15, 2)
+
+  // Relations
+  events AnalyticsEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([startTime])
+  @@index([merchantId])
+  @@map("analytics_sessions")
+}
+
+model AnalyticsEvent {
+  id String @id @default(uuid())
+
+  // Session reference
+  sessionId String
+  session   AnalyticsSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Event details
+  eventType String
+  eventName String
+  category  String?
+  action    String?
+  label     String?
+  value     Decimal? @db.Decimal(15, 4)
+
+  // Context
+  userId     String?
+  merchantId String?
+  productId  String?
+  orderId    String?
+
+  // Page info
+  pageUrl   String?
+  pageTitle String?
+  referrer  String?
+
+  // Custom data
+  properties Json?
+
+  timestamp DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([userId])
+  @@index([productId])
+  @@map("analytics_events")
+}
+
+model BusinessMetric {
+  id String @id @default(uuid())
+
+  // Metric details
+  name        String
+  category    String
+  description String?
+
+  // Time period
+  date        DateTime
+  granularity TimeGranularity
+
+  // Core business metrics
+  totalRevenue          Decimal? @db.Decimal(15, 2)
+  totalOrders           Int?
+  totalUsers            Int?
+  activeUsers           Int?
+  newUsers              Int?
+  averageOrderValue     Decimal? @db.Decimal(15, 2)
+  conversionRate        Decimal? @db.Decimal(5, 4)
+  customerLifetimeValue Decimal? @db.Decimal(15, 2)
+
+  // Merchant metrics
+  activeMerchants          Int?
+  newMerchants             Int?
+  merchantRevenue          Decimal? @db.Decimal(15, 2)
+  averageOrdersPerMerchant Decimal? @db.Decimal(15, 2)
+
+  // Product metrics
+  totalProducts  Int?
+  activeProducts Int?
+  productViews   Int?
+  addToCartRate  Decimal? @db.Decimal(5, 4)
+
+  // Operational metrics
+  averageFulfillmentTime Decimal? @db.Decimal(10, 2) // Hours
+  shippingCost           Decimal? @db.Decimal(15, 2)
+  returnRate             Decimal? @db.Decimal(5, 4)
+  customerSatisfaction   Decimal? @db.Decimal(3, 2)
+
+  // Custom metrics
+  customMetrics Json?
+
+  createdAt DateTime @default(now())
+
+  @@unique([name, date, granularity])
+  @@index([date])
+  @@index([category])
+  @@map("business_metrics")
+}
+
+// Document types for merchant applications and KYC
+model MerchantDocument {
+  id         String   @id @default(uuid())
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  fileId String
+  file   File   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  documentType DocumentType // Type of document (SSM, business license, etc.)
+  description  String? // Optional description
+  status       DocumentStatus @default(PENDING)
+  verifiedAt   DateTime? // When the document was verified
+  verifiedBy   String? // User ID who verified the document
+  notes        String? // Admin notes about the document
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([merchantId, fileId])
+  @@map("merchant_documents")
+}
+
+// Document types for merchant verification
+enum DocumentType {
+  SSM // Suruhanjaya Syarikat Malaysia (Companies Commission of Malaysia)
+  BUSINESS_LICENSE // General business license
+  TAX_CERTIFICATE // Tax registration certificate
+  BANK_STATEMENT // Bank account verification
+  INSURANCE_CERTIFICATE // Business insurance
+  MEMORANDUM_ARTICLES // Memorandum and Articles of Association
+  FORM_24 // Company information form
+  FORM_44 // Annual return form
+  OTHER // Other supporting documents
+}
+
+// Document verification status
+enum DocumentStatus {
+  PENDING // Waiting for review
+  VERIFIED // Document approved
+  REJECTED // Document rejected
+  EXPIRED // Document has expired
+  RESUBMISSION // Requires resubmission
 }

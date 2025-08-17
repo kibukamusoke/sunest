@@ -1,73 +1,63 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
-import { User } from './user.entity';
 import * as bcrypt from 'bcryptjs';
-import * as crypto from 'crypto';
-import { ConfigService } from '@nestjs/config';
+import { User } from './user.entity';
 
 @Injectable()
 export class UsersService {
-  private readonly EMAIL_VERIFICATION_ENABLED: boolean;
+  constructor(private prisma: PrismaService) { }
 
-  constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService,
-  ) {
-    this.EMAIL_VERIFICATION_ENABLED = this.configService.get<string>('EMAIL_VERIFICATION_ENABLED') === 'true';
-  }
-
-  // Helper method to get default app ID for backward compatibility
-  private async getDefaultAppId(): Promise<string> {
-    const defaultApp = await this.prisma.app.findFirst({
-      where: { isActive: true },
-      orderBy: { createdAt: 'asc' }
-    });
-    if (!defaultApp) {
-      throw new Error('No active app found. Please create an app first.');
-    }
-    return defaultApp.id;
-  }
-
-  async findByEmail(email: string, appId?: string): Promise<User | null> {
-    // Get appId or use default
-    const targetAppId = appId || await this.getDefaultAppId();
-
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email_appId: {
-          email: email,
-          appId: targetAppId
-        }
-      },
-      include: {
+  async findByEmail(email: string): Promise<User | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        displayName: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        avatar: true,
+        isActive: true,
+        emailVerified: true,
+        verifyToken: true,
+        resetToken: true,
+        resetTokenExpiry: true,
+        provider: true,
+        providerId: true,
+        refreshToken: true,
+        jobTitle: true,
+        department: true,
+        approvalLimit: true,
+        createdAt: true,
+        updatedAt: true,
         roles: {
           select: {
             name: true,
+            id: true,
           },
         },
-        subscriptions: {
-          where: {
-            status: {
-              in: ['ACTIVE', 'TRIALING'],
+        companies: {
+          include: {
+            company: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+              },
             },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-          select: {
-            id: true,
-            status: true,
-            stripePriceId: true,
-            currentPeriodEnd: true,
-          },
         },
-        devices: {
-          select: {
-            id: true,
-            platform: true,
-            serverCount: true,
-            isActive: true,
+        merchants: {
+          include: {
+            merchant: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+              },
+            },
           },
         },
       },
@@ -77,39 +67,62 @@ export class UsersService {
 
     return this.mapToUserEntity(user);
   }
+
+
 
   async findById(id: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        displayName: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        avatar: true,
+        isActive: true,
+        emailVerified: true,
+        verifyToken: true,
+        resetToken: true,
+        resetTokenExpiry: true,
+        provider: true,
+        providerId: true,
+        refreshToken: true,
+        jobTitle: true,
+        department: true,
+        approvalLimit: true,
+        createdAt: true,
+        updatedAt: true,
         roles: {
           select: {
             name: true,
+            id: true,
           },
         },
-        subscriptions: {
-          where: {
-            status: {
-              in: ['ACTIVE', 'TRIALING'],
+        companies: {
+          include: {
+            company: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+                industry: true,
+              },
             },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-          select: {
-            id: true,
-            status: true,
-            stripePriceId: true,
-            currentPeriodEnd: true,
-          },
         },
-        devices: {
-          select: {
-            id: true,
-            platform: true,
-            serverCount: true,
-            isActive: true,
+        merchants: {
+          include: {
+            merchant: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+                businessType: true,
+              },
+            },
           },
         },
       },
@@ -120,85 +133,186 @@ export class UsersService {
     return this.mapToUserEntity(user);
   }
 
-  async findByVerifyToken(token: string): Promise<User | null> {
-    const user = await this.prisma.user.findFirst({
-      where: { verifyToken: token },
+  async create(userData: {
+    email: string;
+    password: string;
+    displayName?: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    emailVerified?: boolean;
+    roles?: string[];
+    jobTitle?: string;
+    department?: string;
+    approvalLimit?: number;
+  }): Promise<User> {
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: userData.email,
+        password: hashedPassword,
+        displayName: userData.displayName,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phoneNumber: userData.phoneNumber,
+        emailVerified: userData.emailVerified || false,
+        jobTitle: userData.jobTitle,
+        department: userData.department,
+        approvalLimit: userData.approvalLimit,
+        roles: userData.roles ? {
+          connect: userData.roles.map(roleId => ({ id: roleId }))
+        } : undefined,
+      },
       include: {
         roles: {
           select: {
             name: true,
+            id: true,
           },
         },
-        subscriptions: {
-          where: {
-            status: {
-              in: ['ACTIVE', 'TRIALING'],
+        companies: {
+          include: {
+            company: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+              },
             },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-          select: {
-            id: true,
-            status: true,
-            stripePriceId: true,
-            currentPeriodEnd: true,
-          },
         },
-        devices: {
-          select: {
-            id: true,
-            platform: true,
-            serverCount: true,
-            isActive: true,
+        merchants: {
+          include: {
+            merchant: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+              },
+            },
           },
         },
       },
     });
 
-    if (!user) return null;
+    return this.mapToUserEntity(user);
+  }
+
+  async update(id: string, userData: {
+    email?: string;
+    password?: string;
+    displayName?: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    avatar?: string;
+    isActive?: boolean;
+    emailVerified?: boolean;
+    jobTitle?: string;
+    department?: string;
+    approvalLimit?: number;
+  }): Promise<User> {
+    const updateData: any = { ...userData };
+
+    if (userData.password) {
+      updateData.password = await bcrypt.hash(userData.password, 10);
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      include: {
+        roles: {
+          select: {
+            name: true,
+            id: true,
+          },
+        },
+        companies: {
+          include: {
+            company: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+              },
+            },
+          },
+        },
+        merchants: {
+          include: {
+            merchant: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     return this.mapToUserEntity(user);
   }
 
-  async findByResetToken(token: string): Promise<User | null> {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        resetToken: token,
-        resetTokenExpiry: {
-          gte: new Date()
+  async updateRoles(userId: string, roleIds: string[]): Promise<User> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        roles: {
+          set: roleIds.map(id => ({ id }))
         }
       },
       include: {
         roles: {
           select: {
             name: true,
+            id: true,
           },
         },
-        subscriptions: {
-          where: {
-            status: {
-              in: ['ACTIVE', 'TRIALING'],
+        companies: {
+          include: {
+            company: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+              },
             },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-          select: {
-            id: true,
-            status: true,
-            stripePriceId: true,
-            currentPeriodEnd: true,
+        },
+        merchants: {
+          include: {
+            merchant: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+              },
+            },
           },
         },
-        devices: {
+      },
+    });
+
+    return this.mapToUserEntity(user);
+  }
+
+  async findByResetToken(resetToken: string): Promise<User | null> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        resetToken,
+        resetTokenExpiry: {
+          gt: new Date(),
+        },
+      },
+      include: {
+        roles: {
           select: {
+            name: true,
             id: true,
-            platform: true,
-            serverCount: true,
-            isActive: true,
           },
         },
       },
@@ -209,91 +323,169 @@ export class UsersService {
     return this.mapToUserEntity(user);
   }
 
-  async create(data: {
-    email: string;
-    password?: string;
-    displayName?: string;
-    avatar?: string;
-    provider?: string;
-    providerId?: string;
-    appId?: string; // Optional for backward compatibility
-  }): Promise<User> {
-    const { password, appId, ...rest } = data;
-
-    // Get appId or use default
-    const targetAppId = appId || await this.getDefaultAppId();
-
-    // Generate verification token if email verification is enabled
-    const verifyToken = this.EMAIL_VERIFICATION_ENABLED
-      ? this.generateToken()
-      : null;
-
-    const user = await this.prisma.user.create({
-      data: {
-        ...rest,
-        appId: targetAppId,
-        password: password ? await this.hashPassword(password) : null,
-        verifyToken,
-        emailVerified: !this.EMAIL_VERIFICATION_ENABLED, // auto-verify if disabled
-        roles: {
-          connect: [{ name: 'user' }], // default role
-        },
-      },
+  async findByVerifyToken(verifyToken: string): Promise<User | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { verifyToken },
       include: {
         roles: {
           select: {
             name: true,
-          },
-        },
-        subscriptions: {
-          where: {
-            status: {
-              in: ['ACTIVE', 'TRIALING'],
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-          select: {
             id: true,
-            status: true,
-            stripePriceId: true,
-            currentPeriodEnd: true,
-          },
-        },
-        devices: {
-          select: {
-            id: true,
-            platform: true,
-            serverCount: true,
-            isActive: true,
           },
         },
       },
     });
 
+    if (!user) return null;
+
     return this.mapToUserEntity(user);
+  }
+
+  async getAllUsers(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    role?: string;
+  }) {
+    const { page = 1, limit = 20, search, status, role } = params;
+    const skip = (page - 1) * limit;
+
+    // Build where clause for filtering
+    const where: any = {};
+
+    // Search filter - search in email, displayName, firstName, lastName
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { displayName: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+      if (status === 'active') {
+        where.isActive = true;
+      } else if (status === 'inactive') {
+        where.isActive = false;
+      }
+    }
+
+    // Role filter
+    if (role && role !== 'all') {
+      where.roles = {
+        some: {
+          name: role,
+        },
+      };
+    }
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          displayName: true,
+          firstName: true,
+          lastName: true,
+          phoneNumber: true,
+          avatar: true,
+          isActive: true,
+          emailVerified: true,
+          jobTitle: true,
+          department: true,
+          approvalLimit: true,
+          createdAt: true,
+          updatedAt: true,
+          roles: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+          companies: {
+            include: {
+              company: {
+                select: {
+                  name: true,
+                  displayName: true,
+                },
+              },
+            },
+          },
+          merchants: {
+            include: {
+              merchant: {
+                select: {
+                  name: true,
+                  displayName: true,
+                },
+              },
+            },
+          },
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({
+        where,
+      }),
+    ]);
+
+    return {
+      users: users.map(user => this.mapToUserEntity(user)),
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    };
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await this.prisma.user.delete({
+      where: { id },
+    });
+  }
+
+  async getAllRoles() {
+    const roles = await this.prisma.role.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    return {
+      roles,
+    };
   }
 
   async updateRefreshToken(userId: string, refreshToken: string | null): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        refreshToken: refreshToken ? await this.hashPassword(refreshToken) : null,
-      },
+      data: { refreshToken },
     });
   }
 
-  async verifyEmail(token: string): Promise<User> {
-    const user = await this.findByVerifyToken(token);
+  async verifyEmail(verifyToken: string): Promise<User> {
+    const foundUser = await this.prisma.user.findFirst({
+      where: { verifyToken },
+    });
 
-    if (!user) {
+    if (!foundUser) {
       throw new NotFoundException('Invalid verification token');
     }
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
+    const user = await this.prisma.user.update({
+      where: { id: foundUser.id },
       data: {
         emailVerified: true,
         verifyToken: null,
@@ -302,56 +494,29 @@ export class UsersService {
         roles: {
           select: {
             name: true,
-          },
-        },
-        subscriptions: {
-          where: {
-            status: {
-              in: ['ACTIVE', 'TRIALING'],
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-          select: {
             id: true,
-            status: true,
-            stripePriceId: true,
-            currentPeriodEnd: true,
-          },
-        },
-        devices: {
-          select: {
-            id: true,
-            platform: true,
-            serverCount: true,
-            isActive: true,
           },
         },
       },
     });
 
-    return this.mapToUserEntity(updatedUser);
+    return this.mapToUserEntity(user);
   }
 
-  async createPasswordResetToken(email: string, appId?: string): Promise<{ resetToken: string; user: User }> {
-    const user = await this.findByEmail(email, appId);
+  async createPasswordResetToken(email: string): Promise<{ resetToken: string; user: User }> {
+    const resetToken = Math.random().toString(36).substr(2, 15);
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
-    if (!user) {
+    const foundUser = await this.prisma.user.findFirst({
+      where: { email },
+    });
+
+    if (!foundUser) {
       throw new NotFoundException('User not found');
     }
 
-    // Generate password reset token
-    const resetToken = this.generateToken();
-
-    // Set expiration time (1 hour from now)
-    const resetTokenExpiry = new Date();
-    resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1);
-
-    // Update user with reset token
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
+    const user = await this.prisma.user.update({
+      where: { id: foundUser.id },
       data: {
         resetToken,
         resetTokenExpiry,
@@ -360,55 +525,28 @@ export class UsersService {
         roles: {
           select: {
             name: true,
-          },
-        },
-        subscriptions: {
-          where: {
-            status: {
-              in: ['ACTIVE', 'TRIALING'],
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-          select: {
             id: true,
-            status: true,
-            stripePriceId: true,
-            currentPeriodEnd: true,
-          },
-        },
-        devices: {
-          select: {
-            id: true,
-            platform: true,
-            serverCount: true,
-            isActive: true,
           },
         },
       },
     });
 
-    return {
-      resetToken,
-      user: this.mapToUserEntity(updatedUser)
-    };
+    return { resetToken, user: this.mapToUserEntity(user) };
   }
 
   async resetPassword(resetToken: string, newPassword: string): Promise<User> {
-    const user = await this.findByResetToken(resetToken);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    if (!user) {
-      throw new BadRequestException('Invalid or expired reset token');
+    const foundUser = await this.prisma.user.findFirst({
+      where: { resetToken },
+    });
+
+    if (!foundUser) {
+      throw new NotFoundException('Invalid reset token');
     }
 
-    // Hash the new password
-    const hashedPassword = await this.hashPassword(newPassword);
-
-    // Update user with new password and clear the reset token
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
+    const user = await this.prisma.user.update({
+      where: { id: foundUser.id },
       data: {
         password: hashedPassword,
         resetToken: null,
@@ -418,223 +556,71 @@ export class UsersService {
         roles: {
           select: {
             name: true,
+            id: true,
           },
         },
       },
     });
 
-    return this.mapToUserEntity(updatedUser);
+    return this.mapToUserEntity(user);
   }
 
-  async updateProfile(userId: string, data: { displayName?: string; avatar?: string }): Promise<User> {
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data,
-      include: {
-        roles: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-
-    return this.mapToUserEntity(updatedUser);
+  async updateUserRoles(userId: string, roleIds: string[]): Promise<User> {
+    return this.updateRoles(userId, roleIds);
   }
 
-  async updateUserRoles(userId: string, roles: string[]): Promise<User> {
-    // Validate that the user exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        roles: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-
-    if (!existingUser) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    // Validate roles exist in the database
-    const validRoles = await this.prisma.role.findMany({
-      where: {
-        name: {
-          in: roles,
-        },
-      },
-    });
-
-    if (validRoles.length !== roles.length) {
-      const validRoleNames = validRoles.map(r => r.name);
-      const invalidRoles = roles.filter(role => !validRoleNames.includes(role));
-      throw new BadRequestException(`Invalid roles: ${invalidRoles.join(', ')}`);
-    }
-
-    // Update user roles
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        roles: {
-          set: [], // Clear existing roles
-          connect: roles.map(roleName => ({ name: roleName })),
-        },
-      },
-      include: {
-        roles: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-
-    return this.mapToUserEntity(updatedUser);
-  }
-
-  async hashPassword(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt();
-    return bcrypt.hash(password, salt);
-  }
-
-  private generateToken(): string {
-    return crypto.randomBytes(32).toString('hex');
+  async updateProfile(userId: string, profileData: {
+    displayName?: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    avatar?: string;
+    jobTitle?: string;
+    department?: string;
+    idType?: 'NRIC' | 'BRN' | 'PASSPORT' | 'ARMY';
+    idValue?: string;
+  }): Promise<User> {
+    return this.update(userId, profileData);
   }
 
   private mapToUserEntity(user: any): User {
     return new User({
-      ...user,
-      roles: user.roles.map(role => role.name),
+      id: user.id,
+      email: user.email,
+      password: user.password, // Include password for authentication
+      displayName: user.displayName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      avatar: user.avatar,
+      isActive: user.isActive,
+      emailVerified: user.emailVerified,
+      verifyToken: user.verifyToken,
+      resetToken: user.resetToken,
+      resetTokenExpiry: user.resetTokenExpiry,
+      provider: user.provider,
+      providerId: user.providerId,
+      refreshToken: user.refreshToken,
+      jobTitle: user.jobTitle,
+      department: user.department,
+      approvalLimit: user.approvalLimit,
+      idType: user.idType,
+      idValue: user.idValue,
+      roles: user.roles || [],
+      companies: user.companies?.map((uc: any) => ({
+        id: uc.company.id,
+        name: uc.company.name,
+        displayName: uc.company.displayName,
+        role: uc.role,
+      })) || [],
+      merchants: user.merchants?.map((um: any) => ({
+        id: um.merchant.id,
+        name: um.merchant.name,
+        displayName: um.merchant.displayName,
+        role: um.role,
+      })) || [],
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     });
-  }
-
-  async getAllUsers(params: {
-    page: number;
-    limit: number;
-    search?: string;
-    status?: string;
-    role?: string;
-    appId?: string;
-  }) {
-    const { page, limit, search, status, role, appId } = params;
-    const skip = (page - 1) * limit;
-
-    // Build where clause
-    const where: any = {};
-
-    // Filter by app ID if provided, otherwise use default app
-    // Admin users are not filtered by appId (they can access all apps)
-    if (appId) {
-      where.OR = [
-        { appId: appId },
-        {
-          roles: {
-            some: {
-              name: 'admin'
-            }
-          }
-        }
-      ];
-    } else {
-      const defaultAppId = await this.getDefaultAppId();
-      where.OR = [
-        { appId: defaultAppId },
-        {
-          roles: {
-            some: {
-              name: 'admin'
-            }
-          }
-        }
-      ];
-    }
-
-    // Filter by status if provided
-    if (status && status !== 'all') {
-      where.isActive = status === 'active';
-    }
-
-    // Search by email or display name
-    if (search) {
-      where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { displayName: { contains: search, mode: 'insensitive' } }
-      ];
-    }
-
-    // Filter by role if provided
-    if (role && role !== 'all') {
-      where.roles = {
-        some: {
-          name: role
-        }
-      };
-    }
-
-    // Get total count
-    const total = await this.prisma.user.count({ where });
-
-    // Get users with pagination
-    const users = await this.prisma.user.findMany({
-      where,
-      skip,
-      take: limit,
-      include: {
-        roles: {
-          select: {
-            name: true,
-          },
-        },
-        subscriptions: {
-          where: {
-            status: {
-              in: ['ACTIVE', 'TRIALING'],
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-          select: {
-            id: true,
-            status: true,
-            stripePriceId: true,
-            currentPeriodEnd: true,
-          },
-        },
-        devices: {
-          select: {
-            id: true,
-            platform: true,
-            serverCount: true,
-            isActive: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    const mappedUsers = users.map(user => ({
-      ...this.mapToUserEntity(user),
-      subscription: user.subscriptions[0] || null,
-      devices: user.devices || [],
-    }));
-
-    const pages = Math.ceil(total / limit);
-
-    return {
-      users: mappedUsers,
-      total,
-      page,
-      limit,
-      pages,
-      hasNext: page < pages,
-      hasPrev: page > 1,
-    };
   }
 }

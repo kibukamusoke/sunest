@@ -1,7 +1,7 @@
 {
-  "name": "sunest",
+  "name": "hardware-world-backend",
   "version": "0.0.1",
-  "description": "",
+  "description": "Backend API for Hardware World B2B e-commerce platform",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -26,10 +26,10 @@
     "debug:env": "node scripts/debug-env.js",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "openapi:admin": "rimraf /Users/trevorsuna/POLARIS/MAVERICK/PortainerApp/admin/src/lib/sdk && npx openapi-typescript-codegen --input ./openapi/swagger.json --output /Users/trevorsuna/POLARIS/MAVERICK/PortainerApp/admin/src/lib/sdk --client axios --name DoctopusAPI",
-    "openapi:flutter": "openapi-generator-cli generate -i ./openapi/swagger.json -g dart -o ./flutter_sdk --additional-properties=pubName=doctopussdk,pubAuthor=TrevorSuna,pubAuthorEmail=trevorsuna@gmail.com,pubHomepage=https://duriangold.tvxlabs.com,pubVersion=1.0.1 && cd ./flutter_sdk && flutter pub get && cd ..",
-    "sdk": "npm run openapi:admin && npm run openapi:flutter",
-    "deploy": "npm run build && docker buildx build --platform linux/arm64 -t $ECR_REGISTRY/tvxapps/tvxsunest:0.2 --push ."
+    "openapi:admin": "rimraf /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/admin/src/lib/sdk && npx openapi-typescript-codegen --input ./openapi/swagger.json --output /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/admin/src/lib/sdk --client axios --name HardwareWorldAPI",
+    "openapi:merchant": "rimraf /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/merchant/src/lib/sdk && npx openapi-typescript-codegen --input ./openapi/swagger.json --output /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/merchant/src/lib/sdk --client axios --name HardwareWorldAPI",
+    "sdk": "npm run openapi:admin && npm run openapi:merchant",
+    "deploy": "npm run build && docker buildx build --platform linux/arm64 -t $ECR_REGISTRY/hardwareworld:0.2 --push ."
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",
@@ -115,7 +115,7 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3",
+    "typescript": "5.4.5",
     "typescript-eslint": "^8.20.0"
   },
   "jest": {

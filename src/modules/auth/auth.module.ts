@@ -8,6 +8,9 @@ import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { PrismaService } from '../../config/prisma.service';
 
 @Module({
   imports: [
@@ -23,7 +26,14 @@ import { NotificationsModule } from '../notifications/notifications.module';
     }),
   ],
   controllers: [AuthController, ResetPasswordViewController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LocalStrategy,
+    RolesGuard,
+    PermissionsGuard,
+    PrismaService,
+  ],
+  exports: [AuthService, RolesGuard, PermissionsGuard],
 })
-export class AuthModule {}
+export class AuthModule { }

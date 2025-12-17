@@ -36,6 +36,15 @@ async function main() {
     },
   });
 
+  const merchantPendingRole = await prisma.role.upsert({
+    where: { name: 'merchant_pending' },
+    update: {},
+    create: {
+      name: 'merchant_pending',
+      description: 'Pending Merchant - Application under review',
+    },
+  });
+
   const buyerRole = await prisma.role.upsert({
     where: { name: 'buyer' },
     update: {},
@@ -64,7 +73,7 @@ async function main() {
     },
   });
 
-  console.log('Created roles:', { systemAdminRole, merchantAdminRole, merchantUserRole, buyerRole, adminRole, userRole });
+  console.log('Created roles:', { systemAdminRole, merchantAdminRole, merchantUserRole, merchantPendingRole, buyerRole, adminRole, userRole });
 
   // Create Hardware World specific permissions
   const systemManagePermission = await prisma.permission.upsert({
@@ -229,6 +238,18 @@ async function main() {
       permissions: {
         connect: [
           { id: buyerActionsPermission.id },
+          { id: readPermission.id },
+        ],
+      },
+    },
+  });
+
+  // Pending Merchant - Limited access while application is under review
+  await prisma.role.update({
+    where: { id: merchantPendingRole.id },
+    data: {
+      permissions: {
+        connect: [
           { id: readPermission.id },
         ],
       },
@@ -518,6 +539,33 @@ async function main() {
     sampleCompany,
     sampleMerchant
   });
+
+  // Seed system configurations used by the storefront home page
+  await prisma.systemConfiguration.upsert({
+    where: { key: 'application_name' },
+    update: { value: 'Intelibuy' },
+    create: { key: 'application_name', value: 'Intelibuy' },
+  });
+
+  await prisma.systemConfiguration.upsert({
+    where: { key: 'phone_number' },
+    update: { value: '+60-123456789' },
+    create: { key: 'phone_number', value: '+60-123456789' },
+  });
+
+  await prisma.systemConfiguration.upsert({
+    where: { key: 'email_address' },
+    update: { value: 'sales@intelibuy.com' },
+    create: { key: 'email_address', value: 'sales@intelibuy.com' },
+  });
+
+  await prisma.systemConfiguration.upsert({
+    where: { key: 'whatsapp_number' },
+    update: { value: '+60123456789' },
+    create: { key: 'whatsapp_number', value: '+60123456789' },
+  });
+
+  console.log('Seeded system configurations');
 
   console.log('Database seeding completed!');
 }

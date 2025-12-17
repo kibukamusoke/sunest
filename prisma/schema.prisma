@@ -12,25 +12,27 @@ datasource db {
 }
 
 model User {
-  id               String     @id @default(uuid())
-  email            String
-  password         String?
-  displayName      String?
-  firstName        String?
-  lastName         String?
-  phoneNumber      String?
-  avatar           String? // URL to avatar image
-  isActive         Boolean    @default(true)
-  emailVerified    Boolean    @default(false)
-  verifyToken      String? // For email verification
-  resetToken       String? // For password reset
-  resetTokenExpiry DateTime?
-  provider         String? // "local", "google", "github"
-  providerId       String?
-  refreshToken     String?
-  roles            Role[]
-  files            File[]
-  customers        Customer[] // Users can have multiple customers (for different subscriptions)
+  id                String     @id @default(uuid())
+  email             String
+  password          String?
+  displayName       String?
+  firstName         String?
+  lastName          String?
+  phoneNumber       String?
+  avatar            String? // URL to avatar image
+  profilePictureUrl String? // Alternative profile picture URL
+  lastLoginAt       DateTime? // Last login timestamp
+  isActive          Boolean    @default(true)
+  emailVerified     Boolean    @default(false)
+  verifyToken       String? // For email verification
+  resetToken        String? // For password reset
+  resetTokenExpiry  DateTime?
+  provider          String? // "local", "google", "github"
+  providerId        String?
+  refreshToken      String?
+  roles             Role[]
+  files             File[]
+  customers         Customer[] // Users can have multiple customers (for different subscriptions)
 
   // B2B Hardware World specific fields
   jobTitle      String? // User's job title in their company
@@ -38,8 +40,9 @@ model User {
   approvalLimit Decimal? // Maximum order amount they can approve (for buyers)
 
   // Relations for B2B functionality
-  companies UserCompany[] // Companies this user belongs to (for buyers)
-  merchants UserMerchant[] // Merchants this user belongs to (for merchant users)
+  companies           UserCompany[] // Companies this user belongs to (for buyers)
+  merchants           UserMerchant[] // Merchants this user belongs to (for merchant users)
+  teamInvitationsSent TeamInvitation[] // Team invitations sent by this user
 
   // RFQ & Quote Relations
   rfqs          RFQ[]
@@ -94,6 +97,14 @@ model Permission {
   roles       Role[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model SystemConfiguration {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model File {
@@ -161,17 +172,24 @@ model Company {
   website     String?
   logoUrl     String?
 
+  // Contact information
+  companyEmail String? // Company contact email
+  companyPhone String? // Company contact phone number
+
   // Address fields
   addressLine1 String?
   addressLine2 String?
   city         String?
-  state        String?
+  state        String? // State code from configuration module (e.g., '01' for Johor)
   postalCode   String?
   country      String?
 
   // Business details
   taxId              String? // Tax identification number
   registrationNumber String? // Business registration number
+  sstNumber          String? // Sales and Service Tax number
+  idType             String? // Type of ID document (e.g., "passport", "national_id", "drivers_license")
+  idValue            String? // ID document number/value
   creditLimit        Decimal? // Credit limit for purchases
   paymentTerms       String? // e.g., "NET30", "NET60"
 
@@ -181,8 +199,9 @@ model Company {
   verificationNotes String?
 
   // Relations
-  users UserCompany[]
-  rfqs  RFQ[] // RFQs submitted by this company
+  users           UserCompany[]
+  teamInvitations TeamInvitation[]
+  rfqs            RFQ[] // RFQs submitted by this company
 
   // Cart & Checkout Relations
   carts     Cart[]
@@ -208,9 +227,7 @@ model Merchant {
   logoUrl     String?
 
   // Business details
-  businessType       String? // "manufacturer", "distributor", "retailer"
-  taxId              String?
-  registrationNumber String?
+  businessType String? // "manufacturer", "distributor", "retailer"
 
   // Contact information
   contactEmail String?
@@ -244,11 +261,10 @@ model Merchant {
   rejectionReason String?
 
   // Relations
-  users      UserMerchant[]
-  products   Product[]
-  warehouses Warehouse[]
-  quotes     Quote[] // Quotes submitted by this merchant
-  documents  MerchantDocument[] // Supporting documents for KYC
+  users     UserMerchant[]
+  products  Product[]
+  quotes    Quote[] // Quotes submitted by this merchant
+  documents MerchantDocument[] // Supporting documents for KYC
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -278,6 +294,29 @@ model UserCompany {
   @@map("user_companies")
 }
 
+model TeamInvitation {
+  id          String  @id @default(uuid())
+  token       String  @unique
+  email       String
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invitedById String
+  invitedBy   User    @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  role        String  @default("employee") // Role to assign when invitation is accepted
+  message     String? // Optional message from inviter
+
+  // Status tracking
+  status     String    @default("pending") // "pending", "accepted", "rejected", "expired"
+  acceptedAt DateTime?
+  expiresAt  DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email, companyId]) // Prevent duplicate invitations for same email/company
+  @@map("team_invitations")
+}
+
 model UserMerchant {
   id         String   @id @default(uuid())
   userId     String
@@ -288,15 +327,28 @@ model UserMerchant {
   // User's role within the merchant organization
   role String @default("user") // "admin", "manager", "user"
 
-  // Permissions within merchant
-  canManageProducts Boolean @default(false)
-  canManageOrders   Boolean @default(false)
-  canManagePricing  Boolean @default(false)
-  canViewAnalytics  Boolean @default(false)
+  // User details within merchant context
+  jobTitle   String?
+  department String?
 
-  // Status
-  isActive Boolean  @default(true)
-  joinedAt DateTime @default(now())
+  // Permissions within merchant
+  canManageProducts    Boolean @default(false)
+  canManageOrders      Boolean @default(false)
+  canManagePricing     Boolean @default(false)
+  canViewAnalytics     Boolean @default(false)
+  canManageInventory   Boolean @default(false)
+  canManageRfq         Boolean @default(false)
+  canManageFulfillment Boolean @default(false)
+
+  // Additional permissions array for flexibility
+  permissions Json? // Array of permission strings
+
+  // Status and invitation tracking
+  isActive  Boolean   @default(true)
+  status    String    @default("ACTIVE") // "ACTIVE", "PENDING", "INACTIVE"
+  joinedAt  DateTime  @default(now())
+  invitedBy String? // User ID who sent the invitation
+  invitedAt DateTime? // When the invitation was sent
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -570,6 +622,7 @@ enum ProductStatus {
   REJECTED
   PUBLISHED
   DISCONTINUED
+  DELETED
 }
 
 enum AttributeType {
@@ -585,55 +638,6 @@ enum AttributeType {
 
 // ==================== INVENTORY MANAGEMENT MODELS ====================
 
-model Warehouse {
-  id          String  @id @default(uuid())
-  name        String
-  code        String  @unique // e.g., "WH-NYC-01"
-  description String?
-
-  // Location details
-  addressLine1 String
-  addressLine2 String?
-  city         String
-  state        String
-  postalCode   String
-  country      String
-
-  // Warehouse properties
-  type     WarehouseType @default(PHYSICAL) // PHYSICAL, VIRTUAL, DROPSHIP
-  isActive Boolean       @default(true)
-  capacity Int? // Maximum capacity in units
-
-  // Hierarchy support
-  parentId String?
-  parent   Warehouse?  @relation("WarehouseHierarchy", fields: [parentId], references: [id])
-  children Warehouse[] @relation("WarehouseHierarchy")
-
-  // Merchant relationship (null for system warehouses)
-  merchantId String?
-  merchant   Merchant? @relation(fields: [merchantId], references: [id])
-
-  // Relations
-  inventoryItems       InventoryItem[]
-  sourceMovements      StockMovement[] @relation("SourceMovements")
-  destinationMovements StockMovement[] @relation("DestinationMovements")
-
-  // Order Management Relations
-  fulfillments Fulfillment[]
-  shipments    Shipment[]
-
-  // Audit fields
-  createdBy String?
-  updatedBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([merchantId])
-  @@index([type])
-  @@index([isActive])
-  @@map("warehouses")
-}
-
 model InventoryItem {
   id String @id @default(uuid())
 
@@ -642,10 +646,6 @@ model InventoryItem {
   product          Product         @relation(fields: [productId], references: [id])
   productVariantId String?
   productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
-
-  // Warehouse relationship
-  warehouseId String
-  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
 
   // Stock levels
   quantityOnHand    Int @default(0) // Physical stock available
@@ -685,8 +685,7 @@ model InventoryItem {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  @@unique([productId, productVariantId, warehouseId, batchNumber])
-  @@index([warehouseId])
+  @@unique([productId, productVariantId, batchNumber])
   @@index([productId])
   @@index([quantityAvailable])
   @@index([minimumStock])
@@ -715,11 +714,7 @@ model StockMovement {
   unitCost  Decimal?
   totalCost Decimal?
 
-  // Source/Destination (for transfers)
-  sourceWarehouseId      String?
-  sourceWarehouse        Warehouse? @relation("SourceMovements", fields: [sourceWarehouseId], references: [id])
-  destinationWarehouseId String?
-  destinationWarehouse   Warehouse? @relation("DestinationMovements", fields: [destinationWarehouseId], references: [id])
+  // Source/Destination (for transfers) - removed warehouse references
 
   // Related entities
   orderId    String? // Related order if applicable
@@ -1255,12 +1250,13 @@ model Address {
   contactEmail String?
 
   // Address components
-  addressLine1 String
-  addressLine2 String?
-  city         String
-  state        String
-  postalCode   String
-  country      String  @default("US")
+  addressLine1     String
+  addressLine2     String?
+  city             String
+  state            String
+  postalCode       String
+  country          String  @default("US")
+  formattedAddress String? // Original searched address string from Google Places
 
   // Business details
   isDefault Boolean @default(false)
@@ -1301,11 +1297,11 @@ model Checkout {
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
 
-  // Addresses
-  shippingAddressId String
-  shippingAddress   Address @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddressId  String
-  billingAddress    Address @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  // Addresses (optional during initiation, required before submission)
+  shippingAddressId String?
+  shippingAddress   Address? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String?
+  billingAddress    Address? @relation("BillingAddress", fields: [billingAddressId], references: [id])
 
   // Payment information
   paymentMethod       PaymentMethod
@@ -1595,9 +1591,7 @@ model Fulfillment {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id])
 
-  // Warehouse information
-  warehouseId String
-  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  // Warehouse information - removed
 
   // Status and workflow
   status   FulfillmentStatus   @default(PENDING)
@@ -1624,7 +1618,6 @@ model Fulfillment {
   updatedAt DateTime @updatedAt
 
   @@index([orderId])
-  @@index([warehouseId])
   @@index([status])
   @@map("fulfillments")
 }
@@ -1680,10 +1673,13 @@ model Shipment {
   shippingMethod String
   shippingCost   Decimal          @db.Decimal(15, 2)
 
-  // Addresses
-  fromWarehouseId String
-  fromWarehouse   Warehouse @relation(fields: [fromWarehouseId], references: [id])
-  toAddress       Json // Shipping address as JSON
+  // Manual courier info (warehouse handled outside system)
+  courierCompanyName String?
+  trackingUrl        String?
+  notes              String?
+
+  // Addresses - removed warehouse reference
+  toAddress Json // Shipping address as JSON
 
   // Status and dates
   status            ShipmentStatus @default(PREPARING)
@@ -1855,10 +1851,7 @@ enum FulfillmentStatus {
 
 enum PaymentStatus {
   PENDING // Payment pending
-  AUTHORIZED // Payment authorized
-  CAPTURED // Payment captured
-  FAILED // Payment failed
-  REFUNDED // Payment refunded
+  PAID // Payment paid/received
   CANCELLED // Payment cancelled
 }
 

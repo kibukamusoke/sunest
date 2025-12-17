@@ -11,6 +11,7 @@ import { StorageModule } from './modules/storage/storage.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { MerchantManagementModule } from './modules/merchant-management/merchant-management.module';
+import { CompanyModule } from './modules/company-management/company.module';
 import { ProductCatalogModule } from './modules/product-catalog/product-catalog.module';
 import { InventoryManagementModule } from './modules/inventory-management/inventory-management.module';
 import { SearchDiscoveryModule } from './modules/search-discovery/search-discovery.module';
@@ -18,6 +19,9 @@ import { RFQManagementModule } from './modules/rfq-management/rfq-management.mod
 import { CartCheckoutModule } from './modules/cart-checkout/cart-checkout.module';
 import { OrderFulfillmentModule } from './modules/order-fulfillment/order-fulfillment.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ConfigurationsModule } from './modules/configurations/configurations.module';
+import { PlacesModule } from './modules/places/places.module';
+import { SystemConfigurationsModule } from './modules/system-configurations/system-configurations.module';
 import { LoggerModule } from 'nestjs-pino';
 
 @Module({
@@ -41,7 +45,7 @@ import { LoggerModule } from 'nestjs-pino';
               //headers: req.headers,
               body: req.raw.body, // Log request body
               remoteAddress: req.remoteAddress,
-              remotePort: req.remotePort
+              remotePort: req.remotePort,
             };
           },
           res: (res) => {
@@ -50,7 +54,7 @@ import { LoggerModule } from 'nestjs-pino';
               //headers: res.headers,
               body: res.raw.locals?.body, // Log response body
             };
-          }
+          },
         },
       },
     }),
@@ -71,6 +75,7 @@ import { LoggerModule } from 'nestjs-pino';
     NotificationsModule,
     JobsModule,
     MerchantManagementModule,
+    CompanyModule,
     ProductCatalogModule,
     InventoryManagementModule,
     SearchDiscoveryModule,
@@ -78,8 +83,11 @@ import { LoggerModule } from 'nestjs-pino';
     CartCheckoutModule,
     OrderFulfillmentModule,
     AnalyticsModule,
+    ConfigurationsModule,
+    PlacesModule,
+    SystemConfigurationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -1,0 +1,12 @@
+{
+  "email": "test@company.com",
+  "password": "SecurePass123!",
+  "displayName": "Test User",
+  "jobTitle": "Test Manager",
+  "phoneNumber": "+1-555-123-4567",
+  "companyName": "Test Company Inc",
+  "companyDescription": "A test company for API testing",
+  "companyWebsite": "https://testcompany.com",
+  "companySize": "11-50",
+  "industry": "technology"
+}

@@ -1,4 +1,17 @@
-import { IsString, IsUUID, IsOptional, IsEnum, IsDateString, IsInt, Min, IsArray, ValidateNested, IsNotEmpty, IsNumber, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsUUID,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsInt,
+  Min,
+  IsArray,
+  ValidateNested,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ShipmentStatus } from '@prisma/client';
@@ -6,17 +19,17 @@ import { ShipmentStatus } from '@prisma/client';
 // ==================== CREATE SHIPMENT DTOs ====================
 
 export class CreateShipmentItemDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Order item ID',
-    example: 'uuid-order-item-id'
+    example: 'uuid-order-item-id',
   })
   @IsUUID()
   orderItemId: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Quantity being shipped',
     example: 5,
-    minimum: 1
+    minimum: 1,
   })
   @IsInt()
   @Min(1)
@@ -24,25 +37,25 @@ export class CreateShipmentItemDto {
 }
 
 export class PackageDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Package weight in kg',
-    example: 2.5
+    example: 2.5,
   })
   @IsNumber()
   @Transform(({ value }) => parseFloat(value))
   weight: number;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Package dimensions',
-    example: { length: 30, width: 20, height: 15, unit: 'cm' }
+    example: { length: 30, width: 20, height: 15, unit: 'cm' },
   })
   @IsOptional()
   @IsObject()
   dimensions?: any;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Package value for insurance',
-    example: 500.00
+    example: 500.0,
   })
   @IsOptional()
   @IsNumber()
@@ -51,53 +64,53 @@ export class PackageDto {
 }
 
 export class CreateShipmentDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Order ID for this shipment',
-    example: 'uuid-order-id'
+    example: 'uuid-order-id',
   })
   @IsUUID()
   orderId: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Fulfillment ID if shipment is from fulfillment',
-    example: 'uuid-fulfillment-id'
+    example: 'uuid-fulfillment-id',
   })
   @IsOptional()
   @IsUUID()
   fulfillmentId?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Warehouse ID where shipment originates',
-    example: 'uuid-warehouse-id'
+    example: 'uuid-warehouse-id',
   })
   @IsUUID()
   fromWarehouseId: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Shipping carrier ID',
-    example: 'uuid-carrier-id'
+    example: 'uuid-carrier-id',
   })
   @IsOptional()
   @IsUUID()
   carrierId?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Shipping method/service',
-    example: 'Ground'
+    example: 'Ground',
   })
   @IsString()
   @IsNotEmpty()
   shippingMethod: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Shipping cost',
-    example: 15.99
+    example: 15.99,
   })
   @IsNumber()
   @Transform(({ value }) => parseFloat(value))
   shippingCost: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Shipping address as JSON object',
     example: {
       name: 'Acme Corp Receiving',
@@ -106,62 +119,61 @@ export class CreateShipmentDto {
       city: 'New York',
       state: 'NY',
       postalCode: '10001',
-      country: 'US'
-    }
+      country: 'US',
+    },
   })
   @IsObject()
   toAddress: any;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Tracking number',
-    example: '1Z12345E1234567890'
+    example: '1Z12345E1234567890',
   })
   @IsOptional()
   @IsString()
   trackingNumber?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Estimated delivery date',
-    example: '2024-08-18T17:00:00Z'
+    example: '2024-08-18T17:00:00Z',
   })
   @IsOptional()
   @IsDateString()
   estimatedDelivery?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Package weight in kg',
-    example: 2.5
+    example: 2.5,
   })
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseFloat(value))
   weight?: number;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Package dimensions',
-    example: { length: 30, width: 20, height: 15, unit: 'cm' }
+    example: { length: 30, width: 20, height: 15, unit: 'cm' },
   })
   @IsOptional()
   @IsObject()
   dimensions?: any;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Number of packages',
     example: 1,
-    minimum: 1
+    minimum: 1,
   })
   @IsOptional()
   @IsInt()
   @Min(1)
   packageCount?: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Items to include in this shipment',
-    type: [CreateShipmentItemDto]
+    type: [CreateShipmentItemDto],
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateShipmentItemDto)
   items: CreateShipmentItemDto[];
 }
-

@@ -9,7 +9,7 @@ import {
   IsUUID,
   MinLength,
   MaxLength,
-  Min
+  Min,
 } from 'class-validator';
 import { AttributeType } from '@prisma/client';
 
@@ -321,7 +321,8 @@ export class ProductAttributeTemplateResponseDto {
   };
 
   @ApiPropertyOptional({
-    description: 'Name of parent category this attribute was inherited from (if applicable)',
+    description:
+      'Name of parent category this attribute was inherited from (if applicable)',
     example: 'Electronics',
   })
   inheritedFrom?: string;

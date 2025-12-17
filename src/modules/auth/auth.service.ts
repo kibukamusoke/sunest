@@ -1,8 +1,16 @@
-import { Injectable, UnauthorizedException, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { NotificationService } from '../notifications/notification.service';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../config/prisma.service';
+import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -14,8 +22,10 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private notificationService: NotificationService,
+    private prisma: PrismaService,
   ) {
-    this.EMAIL_VERIFICATION_ENABLED = this.configService.get<string>('EMAIL_VERIFICATION_ENABLED') === 'true';
+    this.EMAIL_VERIFICATION_ENABLED =
+      this.configService.get<string>('EMAIL_VERIFICATION_ENABLED') === 'true';
   }
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -27,11 +37,13 @@ export class AuthService {
 
     // Check if email verification is enabled and user's email is not verified
     if (this.EMAIL_VERIFICATION_ENABLED && !user.emailVerified) {
-      throw new ForbiddenException('Email not verified. Please check your email for verification link.');
+      throw new ForbiddenException(
+        'Email not verified. Please check your email for verification link.',
+      );
     }
 
     // Password verification
-    if (user.password && await bcrypt.compare(password, user.password)) {
+    if (user.password && (await bcrypt.compare(password, user.password))) {
       const { password, ...result } = user;
       return result;
     }
@@ -95,28 +107,87 @@ export class AuthService {
     return { success: true };
   }
 
-  async register(email: string, password: string, displayName?: string) {
+  async register(registerDto: RegisterDto) {
     // Check if email already exists
-    const existingUser = await this.usersService.findByEmail(email);
+    const existingUser = await this.usersService.findByEmail(registerDto.email);
     if (existingUser) {
       throw new BadRequestException('Email already in use');
     }
 
-    // Create user with required appId
-    const user = await this.usersService.create({
-      email,
-      password,
-      displayName,
-      // No appId needed in single-tenant system
+    // Check if company name already exists
+    const existingCompany = await this.prisma.company.findUnique({
+      where: { name: registerDto.companyName },
+    });
+    if (existingCompany) {
+      throw new BadRequestException('Company name already exists');
+    }
+
+    // Use transaction to ensure both user and company are created together
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Create user
+      const user = await this.usersService.create({
+        email: registerDto.email,
+        password: registerDto.password,
+        displayName: registerDto.displayName,
+        jobTitle: registerDto.jobTitle,
+        phoneNumber: registerDto.phoneNumber,
+      });
+
+      // Create company
+      const company = await tx.company.create({
+        data: {
+          name: registerDto.companyName,
+          description: registerDto.companyDescription,
+          industry: registerDto.industry,
+          website: registerDto.companyWebsite,
+          isActive: true,
+          isVerified: false,
+        },
+      });
+
+      // Create user-company relationship with admin role
+      await tx.userCompany.create({
+        data: {
+          userId: user.id,
+          companyId: company.id,
+          role: 'admin',
+          isActive: true,
+        },
+      });
+
+      // Assign buyer role to user
+      const buyerRole = await tx.role.findUnique({
+        where: { name: 'buyer' },
+      });
+
+      if (buyerRole) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            roles: {
+              connect: { id: buyerRole.id },
+            },
+          },
+        });
+      }
+
+      return { user, company };
     });
 
     // Send verification email if verification is enabled
-    if (this.EMAIL_VERIFICATION_ENABLED && user.verifyToken) {
-      await this.sendVerificationEmail(user);
+    if (this.EMAIL_VERIFICATION_ENABLED && result.user.verifyToken) {
+      await this.sendVerificationEmail(result.user);
     }
 
-    // Return user info (the User entity will handle password exclusion)
-    return user;
+    // Fetch user with roles and companies for proper response
+    const userWithRoles = await this.usersService.findById(result.user.id);
+    if (!userWithRoles) {
+      throw new BadRequestException(
+        'Failed to retrieve user after registration',
+      );
+    }
+
+    return userWithRoles;
   }
 
   async verifyEmail(token: string) {
@@ -126,7 +197,7 @@ export class AuthService {
       // Send welcome email after verification
       await this.notificationService.sendWelcomeEmail(
         user.email,
-        user.displayName || user.email
+        user.displayName || user.email,
       );
 
       return { success: true };
@@ -138,20 +209,29 @@ export class AuthService {
   async forgotPassword(email: string) {
     try {
       // Generate password reset token and get user
-      const { resetToken, user } = await this.usersService.createPasswordResetToken(email);
+      const { resetToken, user } =
+        await this.usersService.createPasswordResetToken(email);
 
       // Send password reset email
       await this.notificationService.sendPasswordResetEmail(
         user.email,
         user.displayName || user.email,
-        resetToken
+        resetToken,
       );
 
-      return { success: true, message: 'If your email is registered, you will receive a password reset link' };
+      return {
+        success: true,
+        message:
+          'If your email is registered, you will receive a password reset link',
+      };
     } catch (error) {
       // Return success even if user not found to prevent email enumeration attacks
       if (error instanceof NotFoundException) {
-        return { success: true, message: 'If your email is registered, you will receive a password reset link' };
+        return {
+          success: true,
+          message:
+            'If your email is registered, you will receive a password reset link',
+        };
       }
       throw error;
     }
@@ -170,7 +250,7 @@ export class AuthService {
     await this.notificationService.sendVerificationEmail(
       user.email,
       user.displayName || user.email,
-      user.verifyToken
+      user.verifyToken,
     );
   }
 }

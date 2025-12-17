@@ -1,11 +1,22 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEnum, IsObject, IsUUID, IsDateString, IsBoolean, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsUUID,
+  IsDateString,
+  IsBoolean,
+  IsArray,
+  IsNumber,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 import {
   NotificationChannel,
   NotificationPriority,
   NotificationStatus,
   NotificationCategory,
-  EventType
+  EventType,
 } from '@prisma/client';
 
 // Legacy enum for backward compatibility with existing notification service
@@ -66,15 +77,24 @@ export class CreateNotificationDto {
   @IsOptional()
   data?: any;
 
-  @ApiProperty({ enum: NotificationChannel, description: 'Notification channel' })
+  @ApiProperty({
+    enum: NotificationChannel,
+    description: 'Notification channel',
+  })
   @IsEnum(NotificationChannel)
   channel: NotificationChannel;
 
-  @ApiProperty({ enum: NotificationCategory, description: 'Notification category' })
+  @ApiProperty({
+    enum: NotificationCategory,
+    description: 'Notification category',
+  })
   @IsEnum(NotificationCategory)
   category: NotificationCategory;
 
-  @ApiPropertyOptional({ enum: NotificationPriority, description: 'Notification priority' })
+  @ApiPropertyOptional({
+    enum: NotificationPriority,
+    description: 'Notification priority',
+  })
   @IsEnum(NotificationPriority)
   @IsOptional()
   priority?: NotificationPriority;
@@ -84,12 +104,16 @@ export class CreateNotificationDto {
   @IsOptional()
   recipientId?: string;
 
-  @ApiPropertyOptional({ description: 'Recipient email (for external notifications)' })
+  @ApiPropertyOptional({
+    description: 'Recipient email (for external notifications)',
+  })
   @IsString()
   @IsOptional()
   recipientEmail?: string;
 
-  @ApiPropertyOptional({ description: 'Recipient phone (for SMS notifications)' })
+  @ApiPropertyOptional({
+    description: 'Recipient phone (for SMS notifications)',
+  })
   @IsString()
   @IsOptional()
   recipientPhone?: string;
@@ -138,13 +162,22 @@ export class NotificationResponseDto {
   @ApiPropertyOptional({ description: 'Additional data payload' })
   data?: any;
 
-  @ApiProperty({ enum: NotificationChannel, description: 'Notification channel' })
+  @ApiProperty({
+    enum: NotificationChannel,
+    description: 'Notification channel',
+  })
   channel: NotificationChannel;
 
-  @ApiProperty({ enum: NotificationCategory, description: 'Notification category' })
+  @ApiProperty({
+    enum: NotificationCategory,
+    description: 'Notification category',
+  })
   category: NotificationCategory;
 
-  @ApiProperty({ enum: NotificationPriority, description: 'Notification priority' })
+  @ApiProperty({
+    enum: NotificationPriority,
+    description: 'Notification priority',
+  })
   priority: NotificationPriority;
 
   @ApiProperty({ enum: NotificationStatus, description: 'Notification status' })
@@ -202,23 +235,36 @@ export class NotificationResponseDto {
 export class NotificationListQueryDto {
   @ApiPropertyOptional({ description: 'Page number' })
   @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => parseInt(value))
   page?: number;
 
   @ApiPropertyOptional({ description: 'Page size' })
   @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => parseInt(value))
   limit?: number;
 
-  @ApiPropertyOptional({ enum: NotificationChannel, description: 'Filter by channel' })
+  @ApiPropertyOptional({
+    enum: NotificationChannel,
+    description: 'Filter by channel',
+  })
   @IsEnum(NotificationChannel)
   @IsOptional()
   channel?: NotificationChannel;
 
-  @ApiPropertyOptional({ enum: NotificationCategory, description: 'Filter by category' })
+  @ApiPropertyOptional({
+    enum: NotificationCategory,
+    description: 'Filter by category',
+  })
   @IsEnum(NotificationCategory)
   @IsOptional()
   category?: NotificationCategory;
 
-  @ApiPropertyOptional({ enum: NotificationStatus, description: 'Filter by status' })
+  @ApiPropertyOptional({
+    enum: NotificationStatus,
+    description: 'Filter by status',
+  })
   @IsEnum(NotificationStatus)
   @IsOptional()
   status?: NotificationStatus;
@@ -245,7 +291,10 @@ export class NotificationListQueryDto {
 }
 
 export class NotificationListResponseDto {
-  @ApiProperty({ type: [NotificationResponseDto], description: 'List of notifications' })
+  @ApiProperty({
+    type: [NotificationResponseDto],
+    description: 'List of notifications',
+  })
   notifications: NotificationResponseDto[];
 
   @ApiProperty({ description: 'Total count' })
@@ -262,7 +311,10 @@ export class NotificationListResponseDto {
 }
 
 export class UpdateNotificationDto {
-  @ApiPropertyOptional({ enum: NotificationStatus, description: 'Update notification status' })
+  @ApiPropertyOptional({
+    enum: NotificationStatus,
+    description: 'Update notification status',
+  })
   @IsEnum(NotificationStatus)
   @IsOptional()
   status?: NotificationStatus;
@@ -292,15 +344,24 @@ export class BulkNotificationDto {
   @IsOptional()
   data?: any;
 
-  @ApiProperty({ enum: NotificationChannel, description: 'Notification channel' })
+  @ApiProperty({
+    enum: NotificationChannel,
+    description: 'Notification channel',
+  })
   @IsEnum(NotificationChannel)
   channel: NotificationChannel;
 
-  @ApiProperty({ enum: NotificationCategory, description: 'Notification category' })
+  @ApiProperty({
+    enum: NotificationCategory,
+    description: 'Notification category',
+  })
   @IsEnum(NotificationCategory)
   category: NotificationCategory;
 
-  @ApiPropertyOptional({ enum: NotificationPriority, description: 'Notification priority' })
+  @ApiPropertyOptional({
+    enum: NotificationPriority,
+    description: 'Notification priority',
+  })
   @IsEnum(NotificationPriority)
   @IsOptional()
   priority?: NotificationPriority;

@@ -46,4 +46,4 @@ import { MailgunModule } from 'nestjs-mailgun';
     TemplateSeederService,
   ],
 })
-export class NotificationsModule { }
+export class NotificationsModule {}

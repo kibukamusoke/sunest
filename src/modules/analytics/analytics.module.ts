@@ -7,19 +7,14 @@ import { DashboardService } from './dashboard.service';
 import { ReportsService } from './reports.service';
 
 @Module({
-    controllers: [AnalyticsController],
-    providers: [
-        PrismaService,
-        AnalyticsService,
-        MetricsService,
-        DashboardService,
-        ReportsService,
-    ],
-    exports: [
-        AnalyticsService,
-        MetricsService,
-        DashboardService,
-        ReportsService,
-    ],
+  controllers: [AnalyticsController],
+  providers: [
+    PrismaService,
+    AnalyticsService,
+    MetricsService,
+    DashboardService,
+    ReportsService,
+  ],
+  exports: [AnalyticsService, MetricsService, DashboardService, ReportsService],
 })
-export class AnalyticsModule { }
+export class AnalyticsModule {}

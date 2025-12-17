@@ -354,7 +354,7 @@
         },
         "responses": {
           "201": {
-            "description": "User created successfully",
+            "description": "User and company created successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -364,7 +364,7 @@
             }
           }
         },
-        "summary": "Register a new user",
+        "summary": "Register a new user with company",
         "tags": [
           "auth"
         ]
@@ -1950,7 +1950,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns a presigned URL for downloading the file"
+            "description": "Returns a permanent public URL for downloading the file"
           }
         },
         "security": [
@@ -1958,7 +1958,36 @@
             "bearer": []
           }
         ],
-        "summary": "Get a presigned URL for downloading a file from S3",
+        "summary": "Get a permanent public URL for downloading a file from S3",
+        "tags": [
+          "storage"
+        ]
+      }
+    },
+    "/api/storage/public-url/{fileId}": {
+      "get": {
+        "operationId": "StorageController_getPublicUrl",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a permanent public URL for the file"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a permanent public URL for a file",
         "tags": [
           "storage"
         ]
@@ -2042,8 +2071,6 @@
                     "state": "CA",
                     "postalCode": "94105",
                     "country": "USA",
-                    "taxId": "TECH789123456",
-                    "registrationNumber": "REG123456789",
                     "minimumOrderValue": 100
                   }
                 }
@@ -2126,6 +2153,51 @@
           }
         },
         "summary": "Check application status",
+        "tags": [
+          "Merchant Management"
+        ]
+      }
+    },
+    "/api/merchants/my-application/status": {
+      "get": {
+        "description": "Get the status of the authenticated user's merchant application.",
+        "operationId": "MerchantController_getMyApplicationStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Application status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckApplicationStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing JWT token"
+          },
+          "404": {
+            "description": "No application found for this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "statusCode": 404,
+                    "message": "No application found for this user",
+                    "error": "Not Found"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my application status",
         "tags": [
           "Merchant Management"
         ]
@@ -2874,6 +2946,275 @@
         ]
       }
     },
+    "/api/merchants/team": {
+      "get": {
+        "description": "Retrieve all team members for the authenticated merchant",
+        "operationId": "MerchantController_getTeamMembers",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term for name or email",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Filter by role",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "admin",
+                "manager",
+                "user"
+              ]
+            }
+          },
+          {
+            "name": "department",
+            "required": false,
+            "in": "query",
+            "description": "Filter by department",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Filter by active status",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team members retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get merchant team members",
+        "tags": [
+          "Merchant Management"
+        ]
+      }
+    },
+    "/api/merchants/team/stats": {
+      "get": {
+        "description": "Get statistics about the merchant team",
+        "operationId": "MerchantController_getTeamStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Team statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamStatsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get team statistics",
+        "tags": [
+          "Merchant Management"
+        ]
+      }
+    },
+    "/api/merchants/team/invite": {
+      "post": {
+        "description": "Send invitation to join the merchant team",
+        "operationId": "MerchantController_inviteTeamMember",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteTeamMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invitation sent successfully"
+          },
+          "400": {
+            "description": "Invalid invitation data"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite team member",
+        "tags": [
+          "Merchant Management"
+        ]
+      }
+    },
+    "/api/merchants/team/{userId}": {
+      "put": {
+        "description": "Update team member details and permissions",
+        "operationId": "MerchantController_updateTeamMember",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "User ID to update",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Team member updated successfully"
+          },
+          "404": {
+            "description": "Team member not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update team member",
+        "tags": [
+          "Merchant Management"
+        ]
+      },
+      "delete": {
+        "description": "Remove user from merchant team",
+        "operationId": "MerchantController_removeTeamMember",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "User ID to remove",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveTeamMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Team member removed successfully"
+          },
+          "404": {
+            "description": "Team member not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove team member",
+        "tags": [
+          "Merchant Management"
+        ]
+      }
+    },
+    "/api/merchants/team/{userId}/resend-invitation": {
+      "post": {
+        "description": "Resend invitation to pending team member",
+        "operationId": "MerchantController_resendInvitation",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "User ID to resend invitation",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation resent successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resend invitation",
+        "tags": [
+          "Merchant Management"
+        ]
+      }
+    },
     "/api/merchants/{id}/documents": {
       "post": {
         "description": "Upload a supporting document for merchant verification (SSM, business license, etc.)",
@@ -3181,6 +3522,673 @@
         ]
       }
     },
+    "/api/companies": {
+      "post": {
+        "operationId": "CompanyController_createCompany",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Company created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Company name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new company",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/my-companies": {
+      "get": {
+        "operationId": "CompanyController_getUserCompanies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User companies retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get companies the current user belongs to",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/{companyId}": {
+      "get": {
+        "operationId": "CompanyController_getCompanyById",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied to this company"
+          },
+          "404": {
+            "description": "Company not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get company by ID",
+        "tags": [
+          "Company Management"
+        ]
+      },
+      "put": {
+        "operationId": "CompanyController_updateCompany",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Company updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied or insufficient permissions"
+          },
+          "404": {
+            "description": "Company not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update company information",
+        "tags": [
+          "Company Management"
+        ]
+      },
+      "delete": {
+        "operationId": "CompanyController_deleteCompany",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Company deleted successfully"
+          },
+          "403": {
+            "description": "Access denied or insufficient permissions"
+          },
+          "404": {
+            "description": "Company not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete company (soft delete)",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/{companyId}/team": {
+      "get": {
+        "operationId": "CompanyController_getCompanyTeam",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team members retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamListDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied to this company"
+          },
+          "404": {
+            "description": "Company not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get company team members",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/{companyId}/team/invite": {
+      "post": {
+        "operationId": "CompanyController_inviteTeamMember",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteTeamMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Team member invited successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "description": "Company or user not found"
+          },
+          "409": {
+            "description": "User is already a member of this company"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite a team member to the company",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/{companyId}/team/{membershipId}": {
+      "put": {
+        "operationId": "CompanyController_updateTeamMember",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "description": "Team membership ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Team member updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "description": "Company or team member not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update team member role or status",
+        "tags": [
+          "Company Management"
+        ]
+      },
+      "delete": {
+        "operationId": "CompanyController_removeTeamMember",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "description": "Team membership ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Team member removed successfully"
+          },
+          "403": {
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "description": "Company or team member not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove team member from company",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/check-name/{companyName}": {
+      "get": {
+        "operationId": "CompanyController_checkCompanyNameAvailability",
+        "parameters": [
+          {
+            "name": "companyName",
+            "required": true,
+            "in": "path",
+            "description": "Company name to check",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company name availability checked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "available": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check if company name is available",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/invitations/{token}/accept": {
+      "post": {
+        "operationId": "CompanyController_acceptInvitation",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Invitation token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation accepted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "companyId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid invitation or user"
+          },
+          "404": {
+            "description": "Invitation not found"
+          },
+          "409": {
+            "description": "User already belongs to another company"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept team invitation",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/leave": {
+      "post": {
+        "operationId": "CompanyController_leaveCompany",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully left company",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot leave as only admin"
+          },
+          "404": {
+            "description": "User not a member of any company"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Leave current company",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/companies/account": {
+      "delete": {
+        "operationId": "CompanyController_deleteAccount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Account deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot delete account while being only admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete user account and leave all companies",
+        "tags": [
+          "Company Management"
+        ]
+      }
+    },
+    "/api/public/companies/invitations/{token}": {
+      "get": {
+        "operationId": "PublicCompanyController_getInvitationByToken",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Invitation token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "company": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "logoUrl": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "invitedBy": {
+                      "type": "object",
+                      "properties": {
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invitation expired or already processed"
+          },
+          "404": {
+            "description": "Invitation not found"
+          }
+        },
+        "summary": "Get invitation details by token (for join page) - Public endpoint",
+        "tags": [
+          "Public Company Management"
+        ]
+      }
+    },
     "/api/products/categories": {
       "post": {
         "description": "Create a new product category. Only system administrators can create categories.",
@@ -3451,7 +4459,7 @@
         ]
       },
       "get": {
-        "description": "Retrieve products with various filtering options.",
+        "description": "Retrieve products with various filtering options. Public endpoint - only shows published products.",
         "operationId": "ProductCatalogController_getProducts",
         "parameters": [
           {
@@ -3498,7 +4506,8 @@
                 "APPROVED",
                 "REJECTED",
                 "PUBLISHED",
-                "DISCONTINUED"
+                "DISCONTINUED",
+                "DELETED"
               ]
             }
           },
@@ -3613,7 +4622,178 @@
             "bearer": []
           }
         ],
-        "summary": "Get products with filtering and search",
+        "summary": "Get products with filtering and search (Public)",
+        "tags": [
+          "Product Catalog"
+        ]
+      }
+    },
+    "/api/products/my-products": {
+      "get": {
+        "description": "Retrieve products for the authenticated merchant only.",
+        "operationId": "ProductCatalogController_getMerchantProducts",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search query",
+            "schema": {
+              "example": "Intel processor",
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "Category ID filter",
+            "schema": {
+              "example": "processors-category-id",
+              "type": "string"
+            }
+          },
+          {
+            "name": "merchantId",
+            "required": false,
+            "in": "query",
+            "description": "Merchant ID filter",
+            "schema": {
+              "example": "merchant-uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Product status filter",
+            "schema": {
+              "example": "PUBLISHED",
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PENDING_REVIEW",
+                "APPROVED",
+                "REJECTED",
+                "PUBLISHED",
+                "DISCONTINUED",
+                "DELETED"
+              ]
+            }
+          },
+          {
+            "name": "brand",
+            "required": false,
+            "in": "query",
+            "description": "Brand filter",
+            "schema": {
+              "example": "Intel",
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "required": false,
+            "in": "query",
+            "description": "Minimum price filter",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "required": false,
+            "in": "query",
+            "description": "Maximum price filter",
+            "schema": {
+              "example": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "Tags filter (comma-separated)",
+            "schema": {
+              "example": "intel,desktop",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "example": "createdAt",
+              "type": "string",
+              "enum": [
+                "name",
+                "basePrice",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Merchant products retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get merchant products",
         "tags": [
           "Product Catalog"
         ]
@@ -3714,7 +4894,7 @@
     },
     "/api/products/{productId}": {
       "get": {
-        "description": "Retrieve a specific product by its ID.",
+        "description": "Retrieve a specific product by its ID. Public endpoint - only shows published products.",
         "operationId": "ProductCatalogController_getProductById",
         "parameters": [
           {
@@ -3756,7 +4936,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get product by ID",
+        "summary": "Get product by ID (Public)",
         "tags": [
           "Product Catalog"
         ]
@@ -3841,6 +5021,56 @@
           }
         ],
         "summary": "Delete a product",
+        "tags": [
+          "Product Catalog"
+        ]
+      }
+    },
+    "/api/products/my-products/{productId}": {
+      "get": {
+        "description": "Retrieve a specific product by its ID for the authenticated merchant only.",
+        "operationId": "ProductCatalogController_getMerchantProductById",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "Product ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeVariants",
+            "required": false,
+            "in": "query",
+            "description": "Include product variants",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get merchant product by ID",
         "tags": [
           "Product Catalog"
         ]
@@ -4311,305 +5541,9 @@
         ]
       }
     },
-    "/api/inventory/warehouses": {
-      "post": {
-        "description": "Create a new warehouse for inventory management. Only system administrators can create warehouses.",
-        "operationId": "InventoryManagementController_createWarehouse",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateWarehouseDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Warehouse created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WarehouseResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid warehouse data or warehouse code already exists"
-          },
-          "404": {
-            "description": "Parent warehouse or merchant not found"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a new warehouse",
-        "tags": [
-          "Inventory Management"
-        ]
-      },
-      "get": {
-        "description": "Retrieve warehouses with optional filtering and pagination. Merchants see only their warehouses.",
-        "operationId": "InventoryManagementController_getWarehouses",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "Search query",
-            "schema": {
-              "example": "New York",
-              "type": "string"
-            }
-          },
-          {
-            "name": "type",
-            "required": false,
-            "in": "query",
-            "description": "Warehouse type filter",
-            "schema": {
-              "example": "PHYSICAL",
-              "type": "string",
-              "enum": [
-                "PHYSICAL",
-                "VIRTUAL",
-                "DROPSHIP",
-                "CONSIGNMENT"
-              ]
-            }
-          },
-          {
-            "name": "merchantId",
-            "required": false,
-            "in": "query",
-            "description": "Merchant ID filter",
-            "schema": {
-              "example": "merchant-uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "isActive",
-            "required": false,
-            "in": "query",
-            "description": "Active status filter",
-            "schema": {
-              "example": true,
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "includeStats",
-            "required": false,
-            "in": "query",
-            "description": "Include inventory statistics",
-            "schema": {
-              "example": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "includeChildren",
-            "required": false,
-            "in": "query",
-            "description": "Include child warehouses",
-            "schema": {
-              "example": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "Page number",
-            "schema": {
-              "minimum": 1,
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Items per page",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "example": 20,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Warehouses retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WarehouseListDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get warehouses",
-        "tags": [
-          "Inventory Management"
-        ]
-      }
-    },
-    "/api/inventory/warehouses/{id}": {
-      "get": {
-        "description": "Retrieve detailed information about a specific warehouse",
-        "operationId": "InventoryManagementController_getWarehouseById",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Warehouse ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "includeStats",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Warehouse retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WarehouseResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Warehouse not found"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get warehouse by ID",
-        "tags": [
-          "Inventory Management"
-        ]
-      },
-      "put": {
-        "description": "Update warehouse information. Only system administrators can update warehouses.",
-        "operationId": "InventoryManagementController_updateWarehouse",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Warehouse ID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateWarehouseDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Warehouse updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WarehouseResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid update data or circular parent reference"
-          },
-          "404": {
-            "description": "Warehouse not found"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update warehouse",
-        "tags": [
-          "Inventory Management"
-        ]
-      },
-      "delete": {
-        "description": "Delete a warehouse. Only possible if warehouse has no inventory items or child warehouses.",
-        "operationId": "InventoryManagementController_deleteWarehouse",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Warehouse ID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Warehouse deleted successfully"
-          },
-          "400": {
-            "description": "Cannot delete warehouse with existing inventory or child warehouses"
-          },
-          "404": {
-            "description": "Warehouse not found"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Delete warehouse",
-        "tags": [
-          "Inventory Management"
-        ]
-      }
-    },
     "/api/inventory/items": {
       "post": {
-        "description": "Create a new inventory item for a product in a warehouse",
+        "description": "Create a new inventory item for a product",
         "operationId": "InventoryManagementController_createInventoryItem",
         "parameters": [],
         "requestBody": {
@@ -4637,7 +5571,7 @@
             "description": "Invalid inventory item data"
           },
           "409": {
-            "description": "Inventory item already exists for this product/variant/warehouse/batch combination"
+            "description": "Inventory item already exists for this product/variant/batch combination"
           }
         },
         "security": [
@@ -4651,7 +5585,7 @@
         ]
       },
       "get": {
-        "description": "Retrieve inventory items with filtering, search, and pagination",
+        "description": "Retrieve inventory items with filtering, search, and pagination. Authenticated merchants see only their inventory. Public access shows only published products.",
         "operationId": "InventoryManagementController_getInventoryItems",
         "parameters": [
           {
@@ -4671,16 +5605,6 @@
             "description": "Product ID filter",
             "schema": {
               "example": "product-uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "warehouseId",
-            "required": false,
-            "in": "query",
-            "description": "Warehouse ID filter",
-            "schema": {
-              "example": "warehouse-uuid",
               "type": "string"
             }
           },
@@ -4719,16 +5643,6 @@
             "required": false,
             "in": "query",
             "description": "Include product information",
-            "schema": {
-              "example": true,
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "includeWarehouse",
-            "required": false,
-            "in": "query",
-            "description": "Include warehouse information",
             "schema": {
               "example": true,
               "type": "boolean"
@@ -4776,6 +5690,118 @@
           }
         ],
         "summary": "Get inventory items",
+        "tags": [
+          "Inventory Management"
+        ]
+      }
+    },
+    "/api/inventory/merchant/items": {
+      "get": {
+        "description": "Retrieve inventory items for the authenticated merchant only.",
+        "operationId": "InventoryManagementController_getMerchantInventoryItems",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search query (product name, SKU, batch)",
+            "schema": {
+              "example": "Intel i7",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "description": "Product ID filter",
+            "schema": {
+              "example": "product-uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lowStockOnly",
+            "required": false,
+            "in": "query",
+            "description": "Show only low stock items",
+            "schema": {
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "outOfStockOnly",
+            "required": false,
+            "in": "query",
+            "description": "Show only out of stock items",
+            "schema": {
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "activeOnly",
+            "required": false,
+            "in": "query",
+            "description": "Show only active items",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "includeProduct",
+            "required": false,
+            "in": "query",
+            "description": "Include product information",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Merchant inventory items retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get merchant inventory items",
         "tags": [
           "Inventory Management"
         ]
@@ -5032,16 +6058,6 @@
             }
           },
           {
-            "name": "warehouseId",
-            "required": false,
-            "in": "query",
-            "description": "Warehouse ID filter",
-            "schema": {
-              "example": "warehouse-uuid",
-              "type": "string"
-            }
-          },
-          {
             "name": "orderId",
             "required": false,
             "in": "query",
@@ -5143,52 +6159,6 @@
           }
         ],
         "summary": "Get stock movements",
-        "tags": [
-          "Inventory Management"
-        ]
-      }
-    },
-    "/api/inventory/transfers": {
-      "post": {
-        "description": "Transfer inventory between warehouses",
-        "operationId": "InventoryManagementController_createStockTransfer",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateStockTransferDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Stock transfer completed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "transferId": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid transfer data or insufficient stock"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create stock transfer",
         "tags": [
           "Inventory Management"
         ]
@@ -5530,16 +6500,7 @@
       "get": {
         "description": "Get items that are at or below their minimum stock levels",
         "operationId": "InventoryManagementController_getLowStockReport",
-        "parameters": [
-          {
-            "name": "warehouseId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Low stock report generated successfully",
@@ -5567,16 +6528,7 @@
       "get": {
         "description": "Get items that are completely out of stock",
         "operationId": "InventoryManagementController_getOutOfStockReport",
-        "parameters": [
-          {
-            "name": "warehouseId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Out of stock report generated successfully",
@@ -5602,7 +6554,7 @@
     },
     "/api/inventory/reports/inventory-value": {
       "get": {
-        "description": "Get inventory value across all warehouses",
+        "description": "Get total inventory value for all products",
         "operationId": "InventoryManagementController_getInventoryValueReport",
         "parameters": [],
         "responses": {
@@ -5615,9 +6567,6 @@
                   "properties": {
                     "totalValue": {
                       "type": "number"
-                    },
-                    "valueByWarehouse": {
-                      "type": "object"
                     },
                     "valueByCategory": {
                       "type": "object"
@@ -7574,7 +8523,17 @@
     "/api/cart-checkout/cart": {
       "post": {
         "operationId": "CartCheckoutController_createCart",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -7618,6 +8577,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "sessionId",
+            "required": false,
+            "in": "query",
+            "description": "Session ID for guest carts",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Alternative way to provide session ID",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -7637,7 +8614,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get current user cart",
+        "summary": "Get current user or guest cart",
         "tags": [
           "Cart & Checkout"
         ]
@@ -7652,6 +8629,15 @@
             "required": true,
             "in": "path",
             "description": "Cart ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
             "schema": {
               "type": "string"
             }
@@ -7687,6 +8673,15 @@
             "required": true,
             "in": "path",
             "description": "Cart ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
             "schema": {
               "type": "string"
             }
@@ -7734,6 +8729,15 @@
             "required": true,
             "in": "path",
             "description": "Cart ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
             "schema": {
               "type": "string"
             }
@@ -7811,6 +8815,52 @@
         ]
       }
     },
+    "/api/cart-checkout/cart/merge-guest": {
+      "post": {
+        "operationId": "CartCheckoutController_mergeGuestCartOnLogin",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "query",
+            "description": "Guest session ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": false,
+            "in": "query",
+            "description": "Company ID for B2B context",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guest cart merged successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Merge guest cart with user cart on login",
+        "tags": [
+          "Cart & Checkout"
+        ]
+      }
+    },
     "/api/cart-checkout/cart/{cartId}/validate": {
       "post": {
         "operationId": "CartCheckoutController_validateCart",
@@ -7820,6 +8870,15 @@
             "required": true,
             "in": "path",
             "description": "Cart ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
             "schema": {
               "type": "string"
             }
@@ -7857,6 +8916,15 @@
             "required": true,
             "in": "path",
             "description": "Cart ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
             "schema": {
               "type": "string"
             }
@@ -7907,6 +8975,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -7952,6 +9029,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -7979,6 +9065,15 @@
             "required": true,
             "in": "path",
             "description": "Cart ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-session-id",
+            "required": false,
+            "in": "header",
+            "description": "Session ID for guest carts",
             "schema": {
               "type": "string"
             }
@@ -9372,14 +10467,11 @@
             "in": "query",
             "description": "Filter by payment status",
             "schema": {
-              "example": "CAPTURED",
+              "example": "PAID",
               "type": "string",
               "enum": [
                 "PENDING",
-                "AUTHORIZED",
-                "CAPTURED",
-                "FAILED",
-                "REFUNDED",
+                "PAID",
                 "CANCELLED"
               ]
             }
@@ -9626,6 +10718,53 @@
           }
         ],
         "summary": "Update order",
+        "tags": [
+          "Order Management & Fulfillment"
+        ]
+      }
+    },
+    "/api/order-fulfillment/orders/{id}/payment-proof": {
+      "post": {
+        "description": "Attach a payment proof file (uploaded via Storage presigned flow) to an order and optionally update payment status",
+        "operationId": "OrderFulfillmentController_uploadPaymentProof",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadPaymentProofDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment proof attached successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload payment proof (admin)",
         "tags": [
           "Order Management & Fulfillment"
         ]
@@ -9954,6 +11093,59 @@
           }
         ],
         "summary": "Mark shipment as shipped",
+        "tags": [
+          "Order Management & Fulfillment"
+        ]
+      }
+    },
+    "/api/order-fulfillment/shipments/{id}": {
+      "patch": {
+        "description": "Update shipment fields such as status, tracking number, and delivery timestamps",
+        "operationId": "OrderFulfillmentController_updateShipment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShipmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shipment updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Shipment not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update shipment",
         "tags": [
           "Order Management & Fulfillment"
         ]
@@ -12020,6 +13212,188 @@
           "Analytics"
         ]
       }
+    },
+    "/api/configurations/states": {
+      "get": {
+        "description": "Retrieve a list of all Malaysian states with their codes",
+        "operationId": "ConfigurationsController_getMalaysianStates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Malaysian states retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatesListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Malaysian states",
+        "tags": [
+          "Configurations"
+        ]
+      }
+    },
+    "/api/configurations/countries": {
+      "get": {
+        "description": "Retrieve a list of all countries with their ranking (Malaysia = 1, China = 2, followed by Asian countries, then rest of the world)",
+        "operationId": "ConfigurationsController_getCountries",
+        "parameters": [
+          {
+            "name": "region",
+            "required": false,
+            "in": "query",
+            "description": "Filter countries by region (Asia, Europe, North America, South America, Africa, Oceania)",
+            "schema": {
+              "enum": [
+                "Asia",
+                "Europe",
+                "North America",
+                "South America",
+                "Africa",
+                "Oceania"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Countries retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountriesListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get countries with ranking",
+        "tags": [
+          "Configurations"
+        ]
+      }
+    },
+    "/api/places/autocomplete": {
+      "get": {
+        "operationId": "PlacesController_getAutocomplete",
+        "parameters": [
+          {
+            "name": "input",
+            "required": true,
+            "in": "query",
+            "description": "Input text for autocomplete",
+            "schema": {
+              "example": "Kuala Lumpur",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Autocomplete suggestions retrieved successfully"
+          },
+          "400": {
+            "description": "Bad request - missing or invalid input"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Get place autocomplete suggestions",
+        "tags": [
+          "Places"
+        ]
+      }
+    },
+    "/api/places/details": {
+      "get": {
+        "operationId": "PlacesController_getPlaceDetails",
+        "parameters": [
+          {
+            "name": "place_id",
+            "required": true,
+            "in": "query",
+            "description": "Google Places place ID",
+            "schema": {
+              "example": "ChIJr-TXXXXXXXXXXXXXXXXXXX",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Place details retrieved successfully"
+          },
+          "400": {
+            "description": "Bad request - missing or invalid place_id"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Get place details by place ID",
+        "tags": [
+          "Places"
+        ]
+      }
+    },
+    "/api/system-configurations": {
+      "get": {
+        "description": "Retrieve system-level storefront configuration values (app name, contact info, WhatsApp).",
+        "operationId": "SystemConfigurationsController_getPublic",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "System configurations retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemConfigurationsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get public system configurations",
+        "tags": [
+          "SystemConfigurations"
+        ]
+      },
+      "patch": {
+        "description": "Update system-level storefront configuration values. Only system admins may update.",
+        "operationId": "SystemConfigurationsController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSystemConfigurationsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "System configurations updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemConfigurationsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update system configurations",
+        "tags": [
+          "SystemConfigurations"
+        ]
+      }
     }
   },
   "info": {
@@ -12207,6 +13581,31 @@
             "description": "User display name",
             "example": "John Doe"
           },
+          "firstName": {
+            "type": "string",
+            "description": "First name",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name",
+            "example": "Doe"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Phone number",
+            "example": "+1-555-123-4567"
+          },
+          "jobTitle": {
+            "type": "string",
+            "description": "Job title",
+            "example": "Procurement Manager"
+          },
+          "department": {
+            "type": "string",
+            "description": "Department",
+            "example": "Operations"
+          },
           "avatar": {
             "type": "string",
             "description": "URL to avatar image",
@@ -12271,13 +13670,73 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "User email address",
+            "example": "john@acmetech.com"
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "description": "Password for the account",
+            "minLength": 8
           },
           "displayName": {
-            "type": "string"
+            "type": "string",
+            "description": "Full name of the user",
+            "example": "John Doe"
+          },
+          "jobTitle": {
+            "type": "string",
+            "description": "Job title in the company",
+            "example": "Procurement Manager"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Phone number",
+            "example": "+1-555-123-4567"
+          },
+          "companyName": {
+            "type": "string",
+            "description": "Company name",
+            "example": "Acme Technologies Inc."
+          },
+          "companyDescription": {
+            "type": "string",
+            "description": "Company description"
+          },
+          "companyWebsite": {
+            "type": "string",
+            "description": "Company website URL",
+            "example": "https://acmetech.com"
+          },
+          "companySize": {
+            "type": "string",
+            "description": "Company size",
+            "enum": [
+              "1-10",
+              "11-50",
+              "51-200",
+              "201-500",
+              "501-1000",
+              "1000+"
+            ],
+            "example": "51-200"
+          },
+          "industry": {
+            "type": "string",
+            "description": "Industry sector",
+            "enum": [
+              "technology",
+              "manufacturing",
+              "healthcare",
+              "finance",
+              "education",
+              "retail",
+              "construction",
+              "telecommunications",
+              "government",
+              "other"
+            ],
+            "example": "technology"
           },
           "avatar": {
             "type": "string",
@@ -12286,7 +13745,13 @@
         },
         "required": [
           "email",
-          "password"
+          "password",
+          "displayName",
+          "jobTitle",
+          "phoneNumber",
+          "companyName",
+          "companySize",
+          "industry"
         ]
       },
       "RegisterResponseDto": {
@@ -14382,16 +15847,6 @@
             "description": "Country",
             "example": "USA"
           },
-          "taxId": {
-            "type": "string",
-            "description": "Tax identification number",
-            "example": "TECH789123456"
-          },
-          "registrationNumber": {
-            "type": "string",
-            "description": "Business registration number",
-            "example": "REG123456789"
-          },
           "minimumOrderValue": {
             "type": "number",
             "description": "Minimum order value",
@@ -14430,6 +15885,21 @@
             "type": "boolean",
             "description": "Opt-in for e-invoice submission",
             "default": false
+          },
+          "password": {
+            "type": "string",
+            "description": "Password for merchant account",
+            "example": "SecurePassword123!"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name of the primary contact",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the primary contact",
+            "example": "Doe"
           }
         },
         "required": [
@@ -14441,7 +15911,9 @@
           "state",
           "postalCode",
           "country",
-          "taxId"
+          "password",
+          "firstName",
+          "lastName"
         ]
       },
       "MerchantApplicationResponseDto": {
@@ -14732,9 +16204,7 @@
           "approvalNotes": {
             "type": "string",
             "description": "Approval notes from admin",
-            "example": "All documents verified and business credentials confirmed.",
-            "minLength": 10,
-            "maxLength": 1000
+            "example": "All documents verified and business credentials confirmed."
           },
           "conditionalApproval": {
             "type": "boolean",
@@ -14759,10 +16229,7 @@
             "description": "Approval effective date (defaults to now)",
             "example": "2024-01-15T10:30:00Z"
           }
-        },
-        "required": [
-          "approvalNotes"
-        ]
+        }
       },
       "MerchantProfileDto": {
         "type": "object",
@@ -14790,14 +16257,6 @@
           "businessType": {
             "type": "string",
             "description": "Business type"
-          },
-          "taxId": {
-            "type": "string",
-            "description": "Tax ID"
-          },
-          "registrationNumber": {
-            "type": "string",
-            "description": "Registration number"
           },
           "contactEmail": {
             "type": "string",
@@ -15035,6 +16494,206 @@
           }
         }
       },
+      "TeamMemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Team member ID"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Full name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address"
+          },
+          "jobTitle": {
+            "type": "string",
+            "description": "Job title"
+          },
+          "department": {
+            "type": "string",
+            "description": "Department"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role in company"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether team member is active"
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When user joined company"
+          },
+          "lastLoginAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last login date"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "name",
+          "email",
+          "role",
+          "isActive",
+          "joinedAt"
+        ]
+      },
+      "TeamListResponseDto": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "description": "List of team members",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total count of team members"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total pages"
+          }
+        },
+        "required": [
+          "members",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "TeamStatsDto": {
+        "type": "object",
+        "properties": {
+          "totalMembers": {
+            "type": "number",
+            "description": "Total team members"
+          },
+          "activeMembers": {
+            "type": "number",
+            "description": "Active team members"
+          },
+          "pendingInvitations": {
+            "type": "number",
+            "description": "Pending invitations"
+          },
+          "membersByRole": {
+            "type": "object",
+            "description": "Members by role",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "membersByDepartment": {
+            "type": "object",
+            "description": "Members by department",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "recentlyJoined": {
+            "type": "number",
+            "description": "Recently joined members (last 30 days)"
+          }
+        },
+        "required": [
+          "totalMembers",
+          "activeMembers",
+          "pendingInvitations",
+          "membersByRole",
+          "membersByDepartment",
+          "recentlyJoined"
+        ]
+      },
+      "InviteTeamMemberDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address of user to invite",
+            "example": "john@company.com"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role in company",
+            "enum": [
+              "admin",
+              "manager",
+              "employee",
+              "viewer"
+            ],
+            "example": "employee"
+          },
+          "message": {
+            "type": "string",
+            "description": "Custom invitation message"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ]
+      },
+      "UpdateTeamMemberDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Role in company",
+            "enum": [
+              "admin",
+              "manager",
+              "employee",
+              "viewer"
+            ],
+            "example": "manager"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether team member is active",
+            "default": true
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "RemoveTeamMemberDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Reason for removal"
+          },
+          "transferToUserId": {
+            "type": "string",
+            "description": "Transfer data to another user"
+          }
+        }
+      },
       "UpdateDocumentStatusDto": {
         "type": "object",
         "properties": {
@@ -15056,6 +16715,406 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "CreateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Company name",
+            "example": "Acme Technologies Inc."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Company display name",
+            "example": "Acme Tech"
+          },
+          "description": {
+            "type": "string",
+            "description": "Company description"
+          },
+          "industry": {
+            "type": "string",
+            "description": "Industry sector",
+            "enum": [
+              "technology",
+              "manufacturing",
+              "healthcare",
+              "finance",
+              "education",
+              "retail",
+              "construction",
+              "telecommunications",
+              "government",
+              "other"
+            ],
+            "example": "technology"
+          },
+          "website": {
+            "type": "string",
+            "description": "Company website URL",
+            "example": "https://acmetech.com"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Company logo URL"
+          },
+          "companyEmail": {
+            "type": "string",
+            "description": "Company contact email address",
+            "example": "contact@company.com"
+          },
+          "companyPhone": {
+            "type": "string",
+            "description": "Company contact phone number",
+            "example": "+60123456789"
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "Address line 1",
+            "example": "123 Business District"
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Address line 2",
+            "example": "Suite 100"
+          },
+          "city": {
+            "type": "string",
+            "description": "City",
+            "example": "Tech City"
+          },
+          "state": {
+            "type": "string",
+            "description": "State/Province code (e.g., \"01\" for Johor). Use /configurations/states endpoint to get valid state codes.",
+            "example": "01"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Postal/ZIP code",
+            "example": "12345"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country",
+            "example": "United States"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "Tax identification number",
+            "example": "12-3456789"
+          },
+          "registrationNumber": {
+            "type": "string",
+            "description": "Business registration number",
+            "example": "REG123456789"
+          },
+          "sstNumber": {
+            "type": "string",
+            "description": "Sales and Service Tax number",
+            "example": "SST-123456789"
+          },
+          "idType": {
+            "type": "string",
+            "description": "Type of ID document",
+            "example": "passport"
+          },
+          "idValue": {
+            "type": "string",
+            "description": "ID document number/value",
+            "example": "A12345678"
+          },
+          "creditLimit": {
+            "type": "string",
+            "description": "Credit limit for purchases",
+            "example": "50000.00"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "description": "Payment terms",
+            "example": "NET30"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CompanyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Company ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Company name"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Company display name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Company description"
+          },
+          "industry": {
+            "type": "string",
+            "description": "Industry sector"
+          },
+          "website": {
+            "type": "string",
+            "description": "Company website URL"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Company logo URL"
+          },
+          "companyEmail": {
+            "type": "string",
+            "description": "Company contact email address"
+          },
+          "companyPhone": {
+            "type": "string",
+            "description": "Company contact phone number"
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "Address line 1"
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Address line 2"
+          },
+          "city": {
+            "type": "string",
+            "description": "City"
+          },
+          "state": {
+            "type": "string",
+            "description": "State/Province code (e.g., \"01\" for Johor)"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Postal/ZIP code"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "Tax identification number"
+          },
+          "registrationNumber": {
+            "type": "string",
+            "description": "Business registration number"
+          },
+          "sstNumber": {
+            "type": "string",
+            "description": "Sales and Service Tax number"
+          },
+          "idType": {
+            "type": "string",
+            "description": "Type of ID document"
+          },
+          "idValue": {
+            "type": "string",
+            "description": "ID document number/value"
+          },
+          "creditLimit": {
+            "type": "string",
+            "description": "Credit limit for purchases"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "description": "Payment terms"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether company is active"
+          },
+          "isVerified": {
+            "type": "boolean",
+            "description": "Whether company is verified"
+          },
+          "verificationNotes": {
+            "type": "string",
+            "description": "Verification notes"
+          },
+          "teamMemberCount": {
+            "type": "number",
+            "description": "Number of team members"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Company creation date"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Company last updated date"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "isActive",
+          "isVerified",
+          "teamMemberCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "description": "Company display name",
+            "example": "Acme Tech"
+          },
+          "description": {
+            "type": "string",
+            "description": "Company description"
+          },
+          "industry": {
+            "type": "string",
+            "description": "Industry sector",
+            "enum": [
+              "technology",
+              "manufacturing",
+              "healthcare",
+              "finance",
+              "education",
+              "retail",
+              "construction",
+              "telecommunications",
+              "government",
+              "other"
+            ],
+            "example": "technology"
+          },
+          "website": {
+            "type": "string",
+            "description": "Company website URL",
+            "example": "https://acmetech.com"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Company logo URL"
+          },
+          "companyEmail": {
+            "type": "string",
+            "description": "Company contact email address",
+            "example": "contact@company.com"
+          },
+          "companyPhone": {
+            "type": "string",
+            "description": "Company contact phone number",
+            "example": "+60123456789"
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "Address line 1",
+            "example": "123 Business District"
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Address line 2",
+            "example": "Suite 100"
+          },
+          "city": {
+            "type": "string",
+            "description": "City",
+            "example": "Tech City"
+          },
+          "state": {
+            "type": "string",
+            "description": "State/Province code (e.g., \"01\" for Johor). Use /configurations/states endpoint to get valid state codes.",
+            "example": "01"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Postal/ZIP code",
+            "example": "12345"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country",
+            "example": "United States"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "Tax identification number",
+            "example": "12-3456789"
+          },
+          "registrationNumber": {
+            "type": "string",
+            "description": "Business registration number",
+            "example": "REG123456789"
+          },
+          "sstNumber": {
+            "type": "string",
+            "description": "Sales and Service Tax number",
+            "example": "SST-123456789"
+          },
+          "idType": {
+            "type": "string",
+            "description": "Type of ID document",
+            "example": "passport"
+          },
+          "idValue": {
+            "type": "string",
+            "description": "ID document number/value",
+            "example": "A12345678"
+          },
+          "creditLimit": {
+            "type": "string",
+            "description": "Credit limit for purchases",
+            "example": "50000.00"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "description": "Payment terms",
+            "example": "NET30"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether company is active",
+            "default": true
+          },
+          "isVerified": {
+            "type": "boolean",
+            "description": "Whether company is verified",
+            "default": false
+          },
+          "verificationNotes": {
+            "type": "string",
+            "description": "Verification notes"
+          }
+        }
+      },
+      "TeamListDto": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "description": "List of team members",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of team members"
+          }
+        },
+        "required": [
+          "members",
+          "total"
         ]
       },
       "CreateCategoryDto": {
@@ -15624,7 +17683,8 @@
               "APPROVED",
               "REJECTED",
               "PUBLISHED",
-              "DISCONTINUED"
+              "DISCONTINUED",
+              "DELETED"
             ]
           },
           "isActive": {
@@ -16053,7 +18113,8 @@
               "APPROVED",
               "REJECTED",
               "PUBLISHED",
-              "DISCONTINUED"
+              "DISCONTINUED",
+              "DELETED"
             ]
           },
           "isActive": {
@@ -16599,350 +18660,6 @@
           }
         }
       },
-      "CreateWarehouseDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Warehouse name",
-            "example": "New York Distribution Center",
-            "minLength": 2,
-            "maxLength": 100
-          },
-          "code": {
-            "type": "string",
-            "description": "Warehouse code (unique identifier)",
-            "example": "WH-NYC-01",
-            "minLength": 2,
-            "maxLength": 20
-          },
-          "description": {
-            "type": "string",
-            "description": "Warehouse description",
-            "example": "Primary East Coast distribution center",
-            "maxLength": 500
-          },
-          "type": {
-            "type": "string",
-            "description": "Warehouse type",
-            "example": "PHYSICAL",
-            "enum": [
-              "PHYSICAL",
-              "VIRTUAL",
-              "DROPSHIP",
-              "CONSIGNMENT"
-            ]
-          },
-          "addressLine1": {
-            "type": "string",
-            "description": "Address line 1",
-            "example": "123 Industrial Blvd",
-            "maxLength": 200
-          },
-          "addressLine2": {
-            "type": "string",
-            "description": "Address line 2",
-            "example": "Suite 100",
-            "maxLength": 200
-          },
-          "city": {
-            "type": "string",
-            "description": "City",
-            "example": "Brooklyn",
-            "maxLength": 100
-          },
-          "state": {
-            "type": "string",
-            "description": "State/Province",
-            "example": "NY",
-            "maxLength": 100
-          },
-          "postalCode": {
-            "type": "string",
-            "description": "Postal code",
-            "example": "11201",
-            "maxLength": 20
-          },
-          "country": {
-            "type": "string",
-            "description": "Country",
-            "example": "USA",
-            "maxLength": 100
-          },
-          "capacity": {
-            "type": "number",
-            "description": "Warehouse capacity in units",
-            "example": 100000,
-            "minimum": 1
-          },
-          "parentId": {
-            "type": "string",
-            "description": "Parent warehouse ID for hierarchy",
-            "example": "parent-warehouse-uuid"
-          },
-          "merchantId": {
-            "type": "string",
-            "description": "Merchant ID (null for system warehouses)",
-            "example": "merchant-uuid"
-          }
-        },
-        "required": [
-          "name",
-          "code",
-          "type",
-          "addressLine1",
-          "city",
-          "state",
-          "postalCode",
-          "country"
-        ]
-      },
-      "WarehouseResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Warehouse ID",
-            "example": "warehouse-uuid"
-          },
-          "name": {
-            "type": "string",
-            "description": "Warehouse name",
-            "example": "New York Distribution Center"
-          },
-          "code": {
-            "type": "string",
-            "description": "Warehouse code",
-            "example": "WH-NYC-01"
-          },
-          "description": {
-            "type": "string",
-            "description": "Warehouse description",
-            "example": "Primary East Coast distribution center"
-          },
-          "type": {
-            "type": "string",
-            "description": "Warehouse type",
-            "example": "PHYSICAL",
-            "enum": [
-              "PHYSICAL",
-              "VIRTUAL",
-              "DROPSHIP",
-              "CONSIGNMENT"
-            ]
-          },
-          "fullAddress": {
-            "type": "string",
-            "description": "Full address",
-            "example": "123 Industrial Blvd, Brooklyn, NY 11201, USA"
-          },
-          "addressLine1": {
-            "type": "string",
-            "description": "Address line 1",
-            "example": "123 Industrial Blvd"
-          },
-          "addressLine2": {
-            "type": "string",
-            "description": "Address line 2",
-            "example": "Suite 100"
-          },
-          "city": {
-            "type": "string",
-            "description": "City",
-            "example": "Brooklyn"
-          },
-          "state": {
-            "type": "string",
-            "description": "State/Province",
-            "example": "NY"
-          },
-          "postalCode": {
-            "type": "string",
-            "description": "Postal code",
-            "example": "11201"
-          },
-          "country": {
-            "type": "string",
-            "description": "Country",
-            "example": "USA"
-          },
-          "capacity": {
-            "type": "number",
-            "description": "Warehouse capacity in units",
-            "example": 100000
-          },
-          "isActive": {
-            "type": "boolean",
-            "description": "Whether the warehouse is active",
-            "example": true
-          },
-          "parentId": {
-            "type": "string",
-            "description": "Parent warehouse ID",
-            "example": "parent-warehouse-uuid"
-          },
-          "merchantId": {
-            "type": "string",
-            "description": "Merchant ID",
-            "example": "merchant-uuid"
-          },
-          "children": {
-            "description": "Child warehouses (if requested)",
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "inventoryStats": {
-            "type": "object",
-            "description": "Inventory statistics (if requested)"
-          },
-          "merchant": {
-            "type": "object",
-            "description": "Merchant information (if requested)"
-          },
-          "createdBy": {
-            "type": "string",
-            "description": "Created by user ID",
-            "example": "user-uuid"
-          },
-          "updatedBy": {
-            "type": "string",
-            "description": "Updated by user ID",
-            "example": "user-uuid"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Creation timestamp",
-            "example": "2024-01-15T10:30:00Z"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Last update timestamp",
-            "example": "2024-01-15T10:30:00Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "code",
-          "type",
-          "fullAddress",
-          "addressLine1",
-          "city",
-          "state",
-          "postalCode",
-          "country",
-          "isActive",
-          "createdBy",
-          "updatedBy",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "WarehouseListDto": {
-        "type": "object",
-        "properties": {
-          "warehouses": {
-            "description": "List of warehouses",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WarehouseResponseDto"
-            }
-          },
-          "pagination": {
-            "type": "object",
-            "description": "Pagination information"
-          }
-        },
-        "required": [
-          "warehouses",
-          "pagination"
-        ]
-      },
-      "UpdateWarehouseDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Warehouse name",
-            "example": "New York Distribution Center",
-            "minLength": 2,
-            "maxLength": 100
-          },
-          "description": {
-            "type": "string",
-            "description": "Warehouse description",
-            "example": "Primary East Coast distribution center",
-            "maxLength": 500
-          },
-          "type": {
-            "type": "string",
-            "description": "Warehouse type",
-            "example": "PHYSICAL",
-            "enum": [
-              "PHYSICAL",
-              "VIRTUAL",
-              "DROPSHIP",
-              "CONSIGNMENT"
-            ]
-          },
-          "addressLine1": {
-            "type": "string",
-            "description": "Address line 1",
-            "example": "123 Industrial Blvd",
-            "maxLength": 200
-          },
-          "addressLine2": {
-            "type": "string",
-            "description": "Address line 2",
-            "example": "Suite 100",
-            "maxLength": 200
-          },
-          "city": {
-            "type": "string",
-            "description": "City",
-            "example": "Brooklyn",
-            "maxLength": 100
-          },
-          "state": {
-            "type": "string",
-            "description": "State/Province",
-            "example": "NY",
-            "maxLength": 100
-          },
-          "postalCode": {
-            "type": "string",
-            "description": "Postal code",
-            "example": "11201",
-            "maxLength": 20
-          },
-          "country": {
-            "type": "string",
-            "description": "Country",
-            "example": "USA",
-            "maxLength": 100
-          },
-          "capacity": {
-            "type": "number",
-            "description": "Warehouse capacity in units",
-            "example": 100000,
-            "minimum": 1
-          },
-          "parentId": {
-            "type": "string",
-            "description": "Parent warehouse ID for hierarchy",
-            "example": "parent-warehouse-uuid"
-          },
-          "isActive": {
-            "type": "boolean",
-            "description": "Whether the warehouse is active",
-            "example": true
-          }
-        }
-      },
       "CreateInventoryItemDto": {
         "type": "object",
         "properties": {
@@ -16955,11 +18672,6 @@
             "type": "string",
             "description": "Product variant ID (optional)",
             "example": "variant-uuid"
-          },
-          "warehouseId": {
-            "type": "string",
-            "description": "Warehouse ID",
-            "example": "warehouse-uuid"
           },
           "quantityOnHand": {
             "type": "number",
@@ -17025,8 +18737,7 @@
           }
         },
         "required": [
-          "productId",
-          "warehouseId"
+          "productId"
         ]
       },
       "InventoryItemResponseDto": {
@@ -17046,11 +18757,6 @@
             "type": "string",
             "description": "Product variant ID",
             "example": "variant-uuid"
-          },
-          "warehouseId": {
-            "type": "string",
-            "description": "Warehouse ID",
-            "example": "warehouse-uuid"
           },
           "quantityOnHand": {
             "type": "number",
@@ -17179,7 +18885,6 @@
         "required": [
           "id",
           "productId",
-          "warehouseId",
           "quantityOnHand",
           "quantityReserved",
           "quantityAvailable",
@@ -17551,43 +19256,6 @@
         "required": [
           "movements",
           "pagination"
-        ]
-      },
-      "CreateStockTransferDto": {
-        "type": "object",
-        "properties": {
-          "sourceWarehouseId": {
-            "type": "string",
-            "description": "Source warehouse ID",
-            "example": "source-warehouse-uuid"
-          },
-          "destinationWarehouseId": {
-            "type": "string",
-            "description": "Destination warehouse ID",
-            "example": "destination-warehouse-uuid"
-          },
-          "items": {
-            "description": "Items to transfer",
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "reference": {
-            "type": "string",
-            "description": "Transfer reference number",
-            "example": "TRANSFER-2024-001"
-          },
-          "notes": {
-            "type": "string",
-            "description": "Transfer notes",
-            "example": "Quarterly stock rebalancing"
-          }
-        },
-        "required": [
-          "sourceWarehouseId",
-          "destinationWarehouseId",
-          "items"
         ]
       },
       "StockAdjustmentDto": {
@@ -18121,7 +19789,8 @@
                 "APPROVED",
                 "REJECTED",
                 "PUBLISHED",
-                "DISCONTINUED"
+                "DISCONTINUED",
+                "DELETED"
               ]
             }
           },
@@ -18446,7 +20115,8 @@
               "APPROVED",
               "REJECTED",
               "PUBLISHED",
-              "DISCONTINUED"
+              "DISCONTINUED",
+              "DELETED"
             ]
           },
           "createdAt": {
@@ -21818,6 +23488,11 @@
             "example": "US",
             "default": "US"
           },
+          "formattedAddress": {
+            "type": "string",
+            "description": "Original formatted address from Google Places search",
+            "example": "123 Industrial Blvd, Atlanta, GA 30309, USA"
+          },
           "isDefault": {
             "type": "boolean",
             "description": "Whether this is the default address",
@@ -21931,6 +23606,11 @@
             "description": "Country code",
             "example": "US"
           },
+          "formattedAddress": {
+            "type": "string",
+            "description": "Original formatted address from Google Places search",
+            "example": "123 Industrial Blvd, Atlanta, GA 30309, USA"
+          },
           "isDefault": {
             "type": "boolean",
             "description": "Whether this is the default address",
@@ -21967,11 +23647,6 @@
             "type": "string",
             "description": "Last update timestamp",
             "example": "2024-08-07T15:35:00Z"
-          },
-          "formattedAddress": {
-            "type": "string",
-            "description": "Formatted address string",
-            "example": "123 Industrial Blvd, Suite 400, Atlanta, GA 30309, US"
           }
         },
         "required": [
@@ -21987,8 +23662,7 @@
           "isDefault",
           "isActive",
           "createdAt",
-          "updatedAt",
-          "formattedAddress"
+          "updatedAt"
         ]
       },
       "AddressListDto": {
@@ -22090,6 +23764,11 @@
             "type": "string",
             "description": "Country code",
             "example": "US"
+          },
+          "formattedAddress": {
+            "type": "string",
+            "description": "Original formatted address from Google Places search",
+            "example": "123 Industrial Blvd, Atlanta, GA 30309, USA"
           },
           "isDefault": {
             "type": "boolean",
@@ -23238,6 +24917,35 @@
           "items"
         ]
       },
+      "PaymentProofResponseDto": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "description": "Uploaded file ID"
+          },
+          "url": {
+            "type": "string",
+            "description": "Public URL to the proof file"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Original filename"
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the proof was uploaded"
+          },
+          "uploadedBy": {
+            "type": "object",
+            "description": "User who uploaded the proof"
+          }
+        },
+        "required": [
+          "fileId"
+        ]
+      },
       "OrderItemResponseDto": {
         "type": "object",
         "properties": {
@@ -23381,6 +25089,175 @@
           "updatedAt"
         ]
       },
+      "ShipmentItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Shipment item ID"
+          },
+          "orderItem": {
+            "type": "object",
+            "description": "Order item information"
+          },
+          "quantityShipped": {
+            "type": "number",
+            "description": "Quantity shipped"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Created date"
+          }
+        },
+        "required": [
+          "id",
+          "orderItem",
+          "quantityShipped",
+          "createdAt"
+        ]
+      },
+      "ShipmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Shipment ID"
+          },
+          "shipmentNumber": {
+            "type": "string",
+            "description": "Shipment number"
+          },
+          "trackingNumber": {
+            "type": "string",
+            "description": "Tracking number"
+          },
+          "courierCompanyName": {
+            "type": "string",
+            "description": "Courier company name (manual)"
+          },
+          "trackingUrl": {
+            "type": "string",
+            "description": "Tracking URL (manual)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Shipment notes (manual)"
+          },
+          "order": {
+            "type": "object",
+            "description": "Order information"
+          },
+          "fulfillment": {
+            "type": "object",
+            "description": "Fulfillment information"
+          },
+          "carrier": {
+            "type": "object",
+            "description": "Shipping carrier"
+          },
+          "shippingMethod": {
+            "type": "string",
+            "description": "Shipping method"
+          },
+          "shippingCost": {
+            "type": "number",
+            "description": "Shipping cost"
+          },
+          "toAddress": {
+            "type": "object",
+            "description": "Destination address"
+          },
+          "status": {
+            "type": "string",
+            "description": "Shipment status",
+            "enum": [
+              "PREPARING",
+              "READY",
+              "SHIPPED",
+              "IN_TRANSIT",
+              "OUT_FOR_DELIVERY",
+              "DELIVERED",
+              "FAILED_DELIVERY",
+              "RETURNED",
+              "LOST"
+            ]
+          },
+          "shippedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Shipped date"
+          },
+          "estimatedDelivery": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Estimated delivery date"
+          },
+          "actualDelivery": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Actual delivery date"
+          },
+          "weight": {
+            "type": "number",
+            "description": "Package weight"
+          },
+          "dimensions": {
+            "type": "object",
+            "description": "Package dimensions"
+          },
+          "packageCount": {
+            "type": "number",
+            "description": "Package count"
+          },
+          "trackingEvents": {
+            "description": "Tracking events",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "deliverySignature": {
+            "type": "string",
+            "description": "Delivery signature"
+          },
+          "deliveryPhoto": {
+            "type": "string",
+            "description": "Delivery photo URL"
+          },
+          "items": {
+            "description": "Shipment items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentItemResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Created date"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Updated date"
+          }
+        },
+        "required": [
+          "id",
+          "shipmentNumber",
+          "order",
+          "shippingMethod",
+          "shippingCost",
+          "toAddress",
+          "status",
+          "packageCount",
+          "trackingEvents",
+          "items",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "OrderResponseDto": {
         "type": "object",
         "properties": {
@@ -23471,10 +25348,7 @@
             "description": "Payment status",
             "enum": [
               "PENDING",
-              "AUTHORIZED",
-              "CAPTURED",
-              "FAILED",
-              "REFUNDED",
+              "PAID",
               "CANCELLED"
             ]
           },
@@ -23525,6 +25399,13 @@
             "type": "string",
             "description": "Payment reference"
           },
+          "paymentProofs": {
+            "description": "Uploaded payment proofs (if any)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentProofResponseDto"
+            }
+          },
           "creditTerms": {
             "type": "string",
             "description": "Credit terms"
@@ -23534,6 +25415,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OrderItemResponseDto"
+            }
+          },
+          "shipments": {
+            "description": "Shipments for this order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentResponseDto"
             }
           },
           "createdAt": {
@@ -23648,13 +25536,10 @@
             "description": "Payment status",
             "enum": [
               "PENDING",
-              "AUTHORIZED",
-              "CAPTURED",
-              "FAILED",
-              "REFUNDED",
+              "PAID",
               "CANCELLED"
             ],
-            "example": "CAPTURED"
+            "example": "PAID"
           },
           "requestedDeliveryDate": {
             "type": "string",
@@ -23680,8 +25565,51 @@
             "type": "string",
             "description": "Payment reference",
             "example": "PAY-REF-12345"
+          },
+          "taxAmount": {
+            "type": "number",
+            "description": "Tax amount",
+            "example": 79.99
+          },
+          "shippingAmount": {
+            "type": "number",
+            "description": "Shipping / delivery fee amount",
+            "example": 15.99
+          },
+          "discountAmount": {
+            "type": "number",
+            "description": "Discount amount (positive number reduces total)",
+            "example": 10
           }
         }
+      },
+      "UploadPaymentProofDto": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "description": "Uploaded file ID (from Storage presigned upload + confirm)",
+            "example": "uuid-file-id"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "description": "Optionally update payment status at the same time",
+            "enum": [
+              "PENDING",
+              "PAID",
+              "CANCELLED"
+            ],
+            "example": "PAID"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional notes about the payment proof",
+            "example": "Bank transfer receipt uploaded by admin"
+          }
+        },
+        "required": [
+          "fileId"
+        ]
       },
       "CreateFulfillmentItemDto": {
         "type": "object",
@@ -23851,10 +25779,6 @@
             "type": "object",
             "description": "Order information"
           },
-          "warehouse": {
-            "type": "object",
-            "description": "Warehouse information"
-          },
           "status": {
             "type": "string",
             "description": "Fulfillment status",
@@ -23930,7 +25854,6 @@
           "id",
           "fulfillmentNumber",
           "order",
-          "warehouse",
           "status",
           "priority",
           "items",
@@ -23989,20 +25912,20 @@
             "description": "Fulfillment ID if shipment is from fulfillment",
             "example": "uuid-fulfillment-id"
           },
-          "fromWarehouseId": {
+          "courierCompanyName": {
             "type": "string",
-            "description": "Warehouse ID where shipment originates",
-            "example": "uuid-warehouse-id"
+            "description": "Courier company name (manual)",
+            "example": "DHL"
           },
-          "carrierId": {
+          "trackingUrl": {
             "type": "string",
-            "description": "Shipping carrier ID",
-            "example": "uuid-carrier-id"
+            "description": "Tracking URL (optional)",
+            "example": "https://tracking.example.com/track/ABC123"
           },
-          "shippingMethod": {
+          "notes": {
             "type": "string",
-            "description": "Shipping method/service",
-            "example": "Ground"
+            "description": "Shipment notes (optional)",
+            "example": "Left with front desk. Handle with care."
           },
           "shippingCost": {
             "type": "number",
@@ -24063,84 +25986,15 @@
         },
         "required": [
           "orderId",
-          "fromWarehouseId",
-          "shippingMethod",
+          "courierCompanyName",
           "shippingCost",
           "toAddress",
           "items"
         ]
       },
-      "ShipmentItemResponseDto": {
+      "UpdateShipmentDto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "description": "Shipment item ID"
-          },
-          "orderItem": {
-            "type": "object",
-            "description": "Order item information"
-          },
-          "quantityShipped": {
-            "type": "number",
-            "description": "Quantity shipped"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Created date"
-          }
-        },
-        "required": [
-          "id",
-          "orderItem",
-          "quantityShipped",
-          "createdAt"
-        ]
-      },
-      "ShipmentResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Shipment ID"
-          },
-          "shipmentNumber": {
-            "type": "string",
-            "description": "Shipment number"
-          },
-          "trackingNumber": {
-            "type": "string",
-            "description": "Tracking number"
-          },
-          "order": {
-            "type": "object",
-            "description": "Order information"
-          },
-          "fulfillment": {
-            "type": "object",
-            "description": "Fulfillment information"
-          },
-          "carrier": {
-            "type": "object",
-            "description": "Shipping carrier"
-          },
-          "shippingMethod": {
-            "type": "string",
-            "description": "Shipping method"
-          },
-          "shippingCost": {
-            "type": "number",
-            "description": "Shipping cost"
-          },
-          "fromWarehouse": {
-            "type": "object",
-            "description": "Origin warehouse"
-          },
-          "toAddress": {
-            "type": "object",
-            "description": "Destination address"
-          },
           "status": {
             "type": "string",
             "description": "Shipment status",
@@ -24154,83 +26008,65 @@
               "FAILED_DELIVERY",
               "RETURNED",
               "LOST"
-            ]
+            ],
+            "example": "SHIPPED"
           },
-          "shippedAt": {
-            "format": "date-time",
+          "trackingNumber": {
             "type": "string",
-            "description": "Shipped date"
+            "description": "Tracking number",
+            "example": "1Z12345E1234567890"
+          },
+          "carrierId": {
+            "type": "string",
+            "description": "Shipping carrier ID",
+            "example": "uuid-carrier-id"
+          },
+          "shippingMethod": {
+            "type": "string",
+            "description": "Shipping method/service",
+            "example": "Express"
+          },
+          "shippingCost": {
+            "type": "number",
+            "description": "Shipping cost",
+            "example": 25.99
           },
           "estimatedDelivery": {
-            "format": "date-time",
             "type": "string",
-            "description": "Estimated delivery date"
+            "description": "Estimated delivery date",
+            "example": "2024-08-17T17:00:00Z"
           },
           "actualDelivery": {
-            "format": "date-time",
             "type": "string",
-            "description": "Actual delivery date"
+            "description": "Actual delivery date",
+            "example": "2024-08-17T15:30:00Z"
           },
           "weight": {
             "type": "number",
-            "description": "Package weight"
+            "description": "Package weight in kg",
+            "example": 2.8
           },
           "dimensions": {
             "type": "object",
-            "description": "Package dimensions"
-          },
-          "packageCount": {
-            "type": "number",
-            "description": "Package count"
-          },
-          "trackingEvents": {
-            "description": "Tracking events",
-            "type": "array",
-            "items": {
-              "type": "string"
+            "description": "Package dimensions",
+            "example": {
+              "length": 30,
+              "width": 20,
+              "height": 18,
+              "unit": "cm"
             }
           },
           "deliverySignature": {
             "type": "string",
-            "description": "Delivery signature"
+            "description": "Delivery signature",
+            "example": "J. Doe"
           },
           "deliveryPhoto": {
             "type": "string",
-            "description": "Delivery photo URL"
-          },
-          "items": {
-            "description": "Shipment items",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ShipmentItemResponseDto"
-            }
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Created date"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Updated date"
+            "description": "Delivery photo URL",
+            "example": "https://storage.example.com/delivery-photos/123.jpg"
           }
-        },
-        "required": [
-          "id",
-          "shipmentNumber",
-          "order",
-          "shippingMethod",
-          "shippingCost",
-          "fromWarehouse",
-          "toAddress",
-          "status",
-          "packageCount",
-          "trackingEvents",
-          "items",
-          "createdAt",
-          "updatedAt"
-        ]
+        }
       },
       "CreateInvoiceDto": {
         "type": "object",
@@ -24424,7 +26260,7 @@
       "AnalyticsOverviewDto": {
         "type": "object",
         "properties": {
-          "totalRevenue": {
+          "revenue": {
             "type": "number",
             "description": "Total revenue"
           },
@@ -24432,7 +26268,7 @@
             "type": "number",
             "description": "Revenue growth percentage"
           },
-          "totalOrders": {
+          "orders": {
             "type": "number",
             "description": "Total orders"
           },
@@ -24440,25 +26276,29 @@
             "type": "number",
             "description": "Orders growth percentage"
           },
-          "totalUsers": {
+          "activeUsers": {
             "type": "number",
-            "description": "Total users"
+            "description": "Active users"
           },
-          "usersGrowth": {
+          "newUsers": {
             "type": "number",
-            "description": "Users growth percentage"
+            "description": "New users"
           },
           "averageOrderValue": {
             "type": "number",
             "description": "Average order value"
           },
-          "aovGrowth": {
+          "averageOrderValueGrowth": {
             "type": "number",
             "description": "AOV growth percentage"
           },
           "conversionRate": {
             "type": "number",
             "description": "Conversion rate"
+          },
+          "conversionRateGrowth": {
+            "type": "number",
+            "description": "Conversion rate growth percentage"
           },
           "activeMerchants": {
             "type": "number",
@@ -24494,15 +26334,16 @@
           }
         },
         "required": [
-          "totalRevenue",
+          "revenue",
           "revenueGrowth",
-          "totalOrders",
+          "orders",
           "ordersGrowth",
-          "totalUsers",
-          "usersGrowth",
+          "activeUsers",
+          "newUsers",
           "averageOrderValue",
-          "aovGrowth",
+          "averageOrderValueGrowth",
           "conversionRate",
+          "conversionRateGrowth",
           "activeMerchants",
           "topProducts",
           "topMerchants",
@@ -26588,6 +28429,115 @@
             "description": "Email message"
           }
         }
+      },
+      "StateResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "State code",
+            "example": "01"
+          },
+          "state": {
+            "type": "string",
+            "description": "State name",
+            "example": "Johor"
+          }
+        },
+        "required": [
+          "code",
+          "state"
+        ]
+      },
+      "StatesListResponseDto": {
+        "type": "object",
+        "properties": {
+          "states": {
+            "description": "List of Malaysian states",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StateResponseDto"
+            }
+          }
+        },
+        "required": [
+          "states"
+        ]
+      },
+      "CountryResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Country code (ISO 3166-1 alpha-2)",
+            "example": "MY"
+          },
+          "name": {
+            "type": "string",
+            "description": "Country name",
+            "example": "Malaysia"
+          },
+          "ranking": {
+            "type": "number",
+            "description": "Country ranking (1 = highest priority)",
+            "example": 1
+          },
+          "region": {
+            "type": "string",
+            "description": "Country region",
+            "example": "Asia"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "ranking",
+          "region"
+        ]
+      },
+      "CountriesListResponseDto": {
+        "type": "object",
+        "properties": {
+          "countries": {
+            "description": "List of countries with ranking",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CountryResponseDto"
+            }
+          }
+        },
+        "required": [
+          "countries"
+        ]
+      },
+      "SystemConfigurationsResponseDto": {
+        "type": "object",
+        "properties": {
+          "whatsappNumber": {
+            "type": "object",
+            "description": "WhatsApp number (E.164 preferred).",
+            "example": "+60123456789"
+          },
+          "applicationName": {
+            "type": "object",
+            "description": "Application name shown in the storefront.",
+            "example": "Intelibuy"
+          },
+          "phoneNumber": {
+            "type": "object",
+            "description": "Primary phone number shown in the storefront.",
+            "example": "+60-123456789"
+          },
+          "emailAddress": {
+            "type": "object",
+            "description": "Primary email address shown in the storefront.",
+            "example": "sales@intelibuy.com"
+          }
+        }
+      },
+      "UpdateSystemConfigurationsDto": {
+        "type": "object",
+        "properties": {}
       }
     }
   }

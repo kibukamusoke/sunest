@@ -1,0 +1,237 @@
+import { Injectable } from '@nestjs/common';
+import {
+  StateResponseDto,
+  CountryResponseDto,
+  StatesListResponseDto,
+  CountriesListResponseDto,
+} from './dto/configuration.dto';
+
+@Injectable()
+export class ConfigurationsService {
+  private readonly malaysianStates: StateResponseDto[] = [
+    { code: '01', state: 'Johor' },
+    { code: '02', state: 'Kedah' },
+    { code: '03', state: 'Kelantan' },
+    { code: '04', state: 'Melaka' },
+    { code: '05', state: 'Negeri Sembilan' },
+    { code: '06', state: 'Pahang' },
+    { code: '07', state: 'Pulau Pinang' },
+    { code: '08', state: 'Perak' },
+    { code: '09', state: 'Perlis' },
+    { code: '10', state: 'Selangor' },
+    { code: '11', state: 'Terengganu' },
+    { code: '12', state: 'Sabah' },
+    { code: '13', state: 'Sarawak' },
+    { code: '14', state: 'Wilayah Persekutuan Kuala Lumpur' },
+    { code: '15', state: 'Wilayah Persekutuan Labuan' },
+    { code: '16', state: 'Wilayah Persekutuan Putrajaya' },
+    { code: '17', state: 'Not Applicable' },
+  ];
+
+  private readonly countries: CountryResponseDto[] = [
+    // Top priority countries
+    { code: 'MY', name: 'Malaysia', ranking: 1, region: 'Asia' },
+    { code: 'CN', name: 'China', ranking: 2, region: 'Asia' },
+
+    // Other Asian countries
+    { code: 'SG', name: 'Singapore', ranking: 3, region: 'Asia' },
+    { code: 'TH', name: 'Thailand', ranking: 4, region: 'Asia' },
+    { code: 'ID', name: 'Indonesia', ranking: 5, region: 'Asia' },
+    { code: 'PH', name: 'Philippines', ranking: 6, region: 'Asia' },
+    { code: 'VN', name: 'Vietnam', ranking: 7, region: 'Asia' },
+    { code: 'JP', name: 'Japan', ranking: 8, region: 'Asia' },
+    { code: 'KR', name: 'South Korea', ranking: 9, region: 'Asia' },
+    { code: 'IN', name: 'India', ranking: 10, region: 'Asia' },
+    { code: 'BD', name: 'Bangladesh', ranking: 11, region: 'Asia' },
+    { code: 'PK', name: 'Pakistan', ranking: 12, region: 'Asia' },
+    { code: 'LK', name: 'Sri Lanka', ranking: 13, region: 'Asia' },
+    { code: 'MM', name: 'Myanmar', ranking: 14, region: 'Asia' },
+    { code: 'KH', name: 'Cambodia', ranking: 15, region: 'Asia' },
+    { code: 'LA', name: 'Laos', ranking: 16, region: 'Asia' },
+    { code: 'BN', name: 'Brunei', ranking: 17, region: 'Asia' },
+    { code: 'TW', name: 'Taiwan', ranking: 18, region: 'Asia' },
+    { code: 'HK', name: 'Hong Kong', ranking: 19, region: 'Asia' },
+    { code: 'MO', name: 'Macau', ranking: 20, region: 'Asia' },
+    { code: 'MN', name: 'Mongolia', ranking: 21, region: 'Asia' },
+    { code: 'NP', name: 'Nepal', ranking: 22, region: 'Asia' },
+    { code: 'BT', name: 'Bhutan', ranking: 23, region: 'Asia' },
+    { code: 'MV', name: 'Maldives', ranking: 24, region: 'Asia' },
+    { code: 'AF', name: 'Afghanistan', ranking: 25, region: 'Asia' },
+    { code: 'IR', name: 'Iran', ranking: 26, region: 'Asia' },
+    { code: 'IQ', name: 'Iraq', ranking: 27, region: 'Asia' },
+    { code: 'IL', name: 'Israel', ranking: 28, region: 'Asia' },
+    { code: 'JO', name: 'Jordan', ranking: 29, region: 'Asia' },
+    { code: 'KW', name: 'Kuwait', ranking: 30, region: 'Asia' },
+    { code: 'LB', name: 'Lebanon', ranking: 31, region: 'Asia' },
+    { code: 'OM', name: 'Oman', ranking: 32, region: 'Asia' },
+    { code: 'QA', name: 'Qatar', ranking: 33, region: 'Asia' },
+    { code: 'SA', name: 'Saudi Arabia', ranking: 34, region: 'Asia' },
+    { code: 'SY', name: 'Syria', ranking: 35, region: 'Asia' },
+    { code: 'TR', name: 'Turkey', ranking: 36, region: 'Asia' },
+    { code: 'AE', name: 'United Arab Emirates', ranking: 37, region: 'Asia' },
+    { code: 'YE', name: 'Yemen', ranking: 38, region: 'Asia' },
+    { code: 'KZ', name: 'Kazakhstan', ranking: 39, region: 'Asia' },
+    { code: 'KG', name: 'Kyrgyzstan', ranking: 40, region: 'Asia' },
+    { code: 'TJ', name: 'Tajikistan', ranking: 41, region: 'Asia' },
+    { code: 'TM', name: 'Turkmenistan', ranking: 42, region: 'Asia' },
+    { code: 'UZ', name: 'Uzbekistan', ranking: 43, region: 'Asia' },
+    { code: 'GE', name: 'Georgia', ranking: 44, region: 'Asia' },
+    { code: 'AM', name: 'Armenia', ranking: 45, region: 'Asia' },
+    { code: 'AZ', name: 'Azerbaijan', ranking: 46, region: 'Asia' },
+    { code: 'CY', name: 'Cyprus', ranking: 47, region: 'Asia' },
+
+    // Rest of the world
+    { code: 'US', name: 'United States', ranking: 48, region: 'North America' },
+    { code: 'CA', name: 'Canada', ranking: 49, region: 'North America' },
+    { code: 'MX', name: 'Mexico', ranking: 50, region: 'North America' },
+    { code: 'GB', name: 'United Kingdom', ranking: 51, region: 'Europe' },
+    { code: 'DE', name: 'Germany', ranking: 52, region: 'Europe' },
+    { code: 'FR', name: 'France', ranking: 53, region: 'Europe' },
+    { code: 'IT', name: 'Italy', ranking: 54, region: 'Europe' },
+    { code: 'ES', name: 'Spain', ranking: 55, region: 'Europe' },
+    { code: 'NL', name: 'Netherlands', ranking: 56, region: 'Europe' },
+    { code: 'BE', name: 'Belgium', ranking: 57, region: 'Europe' },
+    { code: 'CH', name: 'Switzerland', ranking: 58, region: 'Europe' },
+    { code: 'AT', name: 'Austria', ranking: 59, region: 'Europe' },
+    { code: 'SE', name: 'Sweden', ranking: 60, region: 'Europe' },
+    { code: 'NO', name: 'Norway', ranking: 61, region: 'Europe' },
+    { code: 'DK', name: 'Denmark', ranking: 62, region: 'Europe' },
+    { code: 'FI', name: 'Finland', ranking: 63, region: 'Europe' },
+    { code: 'PL', name: 'Poland', ranking: 64, region: 'Europe' },
+    { code: 'CZ', name: 'Czech Republic', ranking: 65, region: 'Europe' },
+    { code: 'HU', name: 'Hungary', ranking: 66, region: 'Europe' },
+    { code: 'PT', name: 'Portugal', ranking: 67, region: 'Europe' },
+    { code: 'IE', name: 'Ireland', ranking: 68, region: 'Europe' },
+    { code: 'GR', name: 'Greece', ranking: 69, region: 'Europe' },
+    { code: 'RU', name: 'Russia', ranking: 70, region: 'Europe' },
+    { code: 'UA', name: 'Ukraine', ranking: 71, region: 'Europe' },
+    { code: 'RO', name: 'Romania', ranking: 72, region: 'Europe' },
+    { code: 'BG', name: 'Bulgaria', ranking: 73, region: 'Europe' },
+    { code: 'HR', name: 'Croatia', ranking: 74, region: 'Europe' },
+    { code: 'SI', name: 'Slovenia', ranking: 75, region: 'Europe' },
+    { code: 'SK', name: 'Slovakia', ranking: 76, region: 'Europe' },
+    { code: 'LT', name: 'Lithuania', ranking: 77, region: 'Europe' },
+    { code: 'LV', name: 'Latvia', ranking: 78, region: 'Europe' },
+    { code: 'EE', name: 'Estonia', ranking: 79, region: 'Europe' },
+    { code: 'AU', name: 'Australia', ranking: 80, region: 'Oceania' },
+    { code: 'NZ', name: 'New Zealand', ranking: 81, region: 'Oceania' },
+    { code: 'FJ', name: 'Fiji', ranking: 82, region: 'Oceania' },
+    { code: 'PG', name: 'Papua New Guinea', ranking: 83, region: 'Oceania' },
+    { code: 'BR', name: 'Brazil', ranking: 84, region: 'South America' },
+    { code: 'AR', name: 'Argentina', ranking: 85, region: 'South America' },
+    { code: 'CL', name: 'Chile', ranking: 86, region: 'South America' },
+    { code: 'CO', name: 'Colombia', ranking: 87, region: 'South America' },
+    { code: 'PE', name: 'Peru', ranking: 88, region: 'South America' },
+    { code: 'VE', name: 'Venezuela', ranking: 89, region: 'South America' },
+    { code: 'EC', name: 'Ecuador', ranking: 90, region: 'South America' },
+    { code: 'BO', name: 'Bolivia', ranking: 91, region: 'South America' },
+    { code: 'PY', name: 'Paraguay', ranking: 92, region: 'South America' },
+    { code: 'UY', name: 'Uruguay', ranking: 93, region: 'South America' },
+    { code: 'GY', name: 'Guyana', ranking: 94, region: 'South America' },
+    { code: 'SR', name: 'Suriname', ranking: 95, region: 'South America' },
+    { code: 'ZA', name: 'South Africa', ranking: 96, region: 'Africa' },
+    { code: 'EG', name: 'Egypt', ranking: 97, region: 'Africa' },
+    { code: 'NG', name: 'Nigeria', ranking: 98, region: 'Africa' },
+    { code: 'KE', name: 'Kenya', ranking: 99, region: 'Africa' },
+    { code: 'GH', name: 'Ghana', ranking: 100, region: 'Africa' },
+    { code: 'MA', name: 'Morocco', ranking: 101, region: 'Africa' },
+    { code: 'TN', name: 'Tunisia', ranking: 102, region: 'Africa' },
+    { code: 'DZ', name: 'Algeria', ranking: 103, region: 'Africa' },
+    { code: 'LY', name: 'Libya', ranking: 104, region: 'Africa' },
+    { code: 'SD', name: 'Sudan', ranking: 105, region: 'Africa' },
+    { code: 'ET', name: 'Ethiopia', ranking: 106, region: 'Africa' },
+    { code: 'UG', name: 'Uganda', ranking: 107, region: 'Africa' },
+    { code: 'TZ', name: 'Tanzania', ranking: 108, region: 'Africa' },
+    { code: 'ZW', name: 'Zimbabwe', ranking: 109, region: 'Africa' },
+    { code: 'ZM', name: 'Zambia', ranking: 110, region: 'Africa' },
+    { code: 'BW', name: 'Botswana', ranking: 111, region: 'Africa' },
+    { code: 'NA', name: 'Namibia', ranking: 112, region: 'Africa' },
+    { code: 'MW', name: 'Malawi', ranking: 113, region: 'Africa' },
+    { code: 'MZ', name: 'Mozambique', ranking: 114, region: 'Africa' },
+    { code: 'MG', name: 'Madagascar', ranking: 115, region: 'Africa' },
+    { code: 'MU', name: 'Mauritius', ranking: 116, region: 'Africa' },
+    { code: 'SC', name: 'Seychelles', ranking: 117, region: 'Africa' },
+    { code: 'RW', name: 'Rwanda', ranking: 118, region: 'Africa' },
+    { code: 'BI', name: 'Burundi', ranking: 119, region: 'Africa' },
+    { code: 'DJ', name: 'Djibouti', ranking: 120, region: 'Africa' },
+    { code: 'SO', name: 'Somalia', ranking: 121, region: 'Africa' },
+    { code: 'ER', name: 'Eritrea', ranking: 122, region: 'Africa' },
+    { code: 'SS', name: 'South Sudan', ranking: 123, region: 'Africa' },
+    {
+      code: 'CF',
+      name: 'Central African Republic',
+      ranking: 124,
+      region: 'Africa',
+    },
+    { code: 'TD', name: 'Chad', ranking: 125, region: 'Africa' },
+    { code: 'NE', name: 'Niger', ranking: 126, region: 'Africa' },
+    { code: 'ML', name: 'Mali', ranking: 127, region: 'Africa' },
+    { code: 'BF', name: 'Burkina Faso', ranking: 128, region: 'Africa' },
+    { code: 'CI', name: 'Ivory Coast', ranking: 129, region: 'Africa' },
+    { code: 'LR', name: 'Liberia', ranking: 130, region: 'Africa' },
+    { code: 'SL', name: 'Sierra Leone', ranking: 131, region: 'Africa' },
+    { code: 'GN', name: 'Guinea', ranking: 132, region: 'Africa' },
+    { code: 'GW', name: 'Guinea-Bissau', ranking: 133, region: 'Africa' },
+    { code: 'GM', name: 'Gambia', ranking: 134, region: 'Africa' },
+    { code: 'SN', name: 'Senegal', ranking: 135, region: 'Africa' },
+    { code: 'MR', name: 'Mauritania', ranking: 136, region: 'Africa' },
+    { code: 'CV', name: 'Cape Verde', ranking: 137, region: 'Africa' },
+    {
+      code: 'ST',
+      name: 'São Tomé and Príncipe',
+      ranking: 138,
+      region: 'Africa',
+    },
+    { code: 'GQ', name: 'Equatorial Guinea', ranking: 139, region: 'Africa' },
+    { code: 'GA', name: 'Gabon', ranking: 140, region: 'Africa' },
+    {
+      code: 'CG',
+      name: 'Republic of the Congo',
+      ranking: 141,
+      region: 'Africa',
+    },
+    {
+      code: 'CD',
+      name: 'Democratic Republic of the Congo',
+      ranking: 142,
+      region: 'Africa',
+    },
+    { code: 'AO', name: 'Angola', ranking: 143, region: 'Africa' },
+    { code: 'CM', name: 'Cameroon', ranking: 144, region: 'Africa' },
+    { code: 'TG', name: 'Togo', ranking: 145, region: 'Africa' },
+    { code: 'BJ', name: 'Benin', ranking: 146, region: 'Africa' },
+    { code: 'LS', name: 'Lesotho', ranking: 147, region: 'Africa' },
+    { code: 'SZ', name: 'Eswatini', ranking: 148, region: 'Africa' },
+  ];
+
+  async getMalaysianStates(): Promise<StatesListResponseDto> {
+    return {
+      states: this.malaysianStates,
+    };
+  }
+
+  async getCountries(): Promise<CountriesListResponseDto> {
+    // Sort countries by ranking (ascending order)
+    const sortedCountries = [...this.countries].sort(
+      (a, b) => a.ranking - b.ranking,
+    );
+
+    return {
+      countries: sortedCountries,
+    };
+  }
+
+  async getCountriesByRegion(
+    region: string,
+  ): Promise<CountriesListResponseDto> {
+    const filteredCountries = this.countries
+      .filter(
+        (country) => country.region.toLowerCase() === region.toLowerCase(),
+      )
+      .sort((a, b) => a.ranking - b.ranking);
+
+    return {
+      countries: filteredCountries,
+    };
+  }
+}

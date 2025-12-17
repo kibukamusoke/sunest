@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsInt, IsUrl, IsUUID, MinLength, MaxLength, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  IsUrl,
+  IsUUID,
+  MinLength,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({
@@ -82,7 +92,8 @@ export class CreateCategoryDto {
 
   @ApiPropertyOptional({
     description: 'SEO meta description',
-    example: 'High-performance computer processors from top brands like Intel and AMD',
+    example:
+      'High-performance computer processors from top brands like Intel and AMD',
     maxLength: 300,
   })
   @IsOptional()
@@ -170,7 +181,8 @@ export class UpdateCategoryDto {
 
   @ApiPropertyOptional({
     description: 'SEO meta description',
-    example: 'High-performance computer processors from top brands like Intel and AMD',
+    example:
+      'High-performance computer processors from top brands like Intel and AMD',
     maxLength: 300,
   })
   @IsOptional()

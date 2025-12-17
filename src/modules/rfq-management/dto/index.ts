@@ -1,7 +1,7 @@
 // RFQ DTOs
 export * from './rfq.dto';
 
-// Quote DTOs  
+// Quote DTOs
 export * from './quote.dto';
 
 // Comment DTOs
@@ -9,14 +9,14 @@ export * from './comment.dto';
 
 // Re-export enums for convenience
 export {
-    RFQStatus,
-    UrgencyLevel,
-    RFQRequirementsDto,
-    RFQItemSpecificationDto
+  RFQStatus,
+  UrgencyLevel,
+  RFQRequirementsDto,
+  RFQItemSpecificationDto,
 } from './rfq.dto';
 
 export {
-    QuoteStatus,
-    QuoteItemPricingDto,
-    AlternativeProductDto
+  QuoteStatus,
+  QuoteItemPricingDto,
+  AlternativeProductDto,
 } from './quote.dto';

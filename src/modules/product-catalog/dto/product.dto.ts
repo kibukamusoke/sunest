@@ -1,19 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { 
-  IsString, 
-  IsOptional, 
-  IsBoolean, 
-  IsDecimal, 
-  IsUUID, 
-  IsArray, 
-  IsEnum, 
-  IsInt, 
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsDecimal,
+  IsNumber,
+  IsUUID,
+  IsArray,
+  IsEnum,
+  IsInt,
   IsUrl,
-  MinLength, 
-  MaxLength, 
+  MinLength,
+  MaxLength,
   Min,
   ValidateNested,
-  IsObject
+  IsObject,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ProductStatus } from '@prisma/client';
@@ -42,7 +43,8 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     description: 'Detailed product description',
-    example: '12th Gen Intel Core i7-12700K desktop processor with 12 cores and 20 threads...',
+    example:
+      '12th Gen Intel Core i7-12700K desktop processor with 12 cores and 20 threads...',
     maxLength: 5000,
   })
   @IsOptional()
@@ -123,8 +125,10 @@ export class CreateProductDto {
     example: 0.2,
   })
   @IsOptional()
-  @IsDecimal()
-  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   weight?: number;
 
   @ApiPropertyOptional({
@@ -140,8 +144,10 @@ export class CreateProductDto {
     example: 299.99,
     minimum: 0,
   })
-  @IsDecimal()
-  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   @Min(0)
   basePrice: number;
 
@@ -151,25 +157,32 @@ export class CreateProductDto {
     minimum: 0,
   })
   @IsOptional()
-  @IsDecimal()
-  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   @Min(0)
   msrp?: number;
 
   @ApiPropertyOptional({
     description: 'Merchant cost price',
-    example: 250.00,
+    example: 250.0,
     minimum: 0,
   })
   @IsOptional()
-  @IsDecimal()
-  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   @Min(0)
   costPrice?: number;
 
   @ApiPropertyOptional({
     description: 'Product images URLs',
-    example: ['https://example.com/intel-i7-front.jpg', 'https://example.com/intel-i7-back.jpg'],
+    example: [
+      'https://example.com/intel-i7-front.jpg',
+      'https://example.com/intel-i7-back.jpg',
+    ],
     type: [String],
   })
   @IsOptional()
@@ -266,7 +279,8 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     description: 'SEO meta description',
-    example: 'Buy Intel Core i7-12700K 12-core desktop processor online at Hardware World',
+    example:
+      'Buy Intel Core i7-12700K 12-core desktop processor online at Hardware World',
     maxLength: 300,
   })
   @IsOptional()
@@ -300,7 +314,8 @@ export class UpdateProductDto {
 
   @ApiPropertyOptional({
     description: 'Detailed product description',
-    example: '12th Gen Intel Core i7-12700K desktop processor with 12 cores and 20 threads...',
+    example:
+      '12th Gen Intel Core i7-12700K desktop processor with 12 cores and 20 threads...',
     maxLength: 5000,
   })
   @IsOptional()
@@ -371,8 +386,10 @@ export class UpdateProductDto {
     example: 0.2,
   })
   @IsOptional()
-  @IsDecimal()
-  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   weight?: number;
 
   @ApiPropertyOptional({
@@ -389,8 +406,10 @@ export class UpdateProductDto {
     minimum: 0,
   })
   @IsOptional()
-  @IsDecimal()
-  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   @Min(0)
   basePrice?: number;
 
@@ -400,25 +419,32 @@ export class UpdateProductDto {
     minimum: 0,
   })
   @IsOptional()
-  @IsDecimal()
-  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   @Min(0)
   msrp?: number;
 
   @ApiPropertyOptional({
     description: 'Merchant cost price',
-    example: 250.00,
+    example: 250.0,
     minimum: 0,
   })
   @IsOptional()
-  @IsDecimal()
-  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseFloat(value) : value,
+  )
   @Min(0)
   costPrice?: number;
 
   @ApiPropertyOptional({
     description: 'Product images URLs',
-    example: ['https://example.com/intel-i7-front.jpg', 'https://example.com/intel-i7-back.jpg'],
+    example: [
+      'https://example.com/intel-i7-front.jpg',
+      'https://example.com/intel-i7-back.jpg',
+    ],
     type: [String],
   })
   @IsOptional()
@@ -533,7 +559,8 @@ export class UpdateProductDto {
 
   @ApiPropertyOptional({
     description: 'SEO meta description',
-    example: 'Buy Intel Core i7-12700K 12-core desktop processor online at Hardware World',
+    example:
+      'Buy Intel Core i7-12700K 12-core desktop processor online at Hardware World',
     maxLength: 300,
   })
   @IsOptional()
@@ -641,7 +668,7 @@ export class ProductResponseDto {
 
   @ApiPropertyOptional({
     description: 'Merchant cost price',
-    example: 250.00,
+    example: 250.0,
   })
   costPrice?: number;
 

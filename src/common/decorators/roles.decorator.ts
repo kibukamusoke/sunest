@@ -9,4 +9,5 @@ export const MerchantAdmin = () => Roles('merchant_admin');
 export const MerchantUser = () => Roles('merchant_user', 'merchant_admin');
 export const Buyer = () => Roles('buyer');
 export const AnyMerchantRole = () => Roles('merchant_admin', 'merchant_user');
-export const AnyRole = () => Roles('system_admin', 'merchant_admin', 'merchant_user', 'buyer');
+export const AnyRole = () =>
+  Roles('system_admin', 'merchant_admin', 'merchant_user', 'buyer');

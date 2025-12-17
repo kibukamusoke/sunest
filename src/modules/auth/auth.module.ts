@@ -21,7 +21,9 @@ import { PrismaService } from '../../config/prisma.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: `${configService.get<number>('JWT_EXPIRATION')}s` },
+        signOptions: {
+          expiresIn: `${configService.get<number>('JWT_EXPIRATION')}s`,
+        },
       }),
     }),
   ],
@@ -36,4 +38,4 @@ import { PrismaService } from '../../config/prisma.service';
   ],
   exports: [AuthService, RolesGuard, PermissionsGuard],
 })
-export class AuthModule { }
+export class AuthModule {}

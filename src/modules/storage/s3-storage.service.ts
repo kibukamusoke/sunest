@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../config/prisma.service';
-import { 
-  S3Client, 
-  PutObjectCommand, 
+import {
+  S3Client,
+  PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
-  HeadObjectCommand
+  HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as crypto from 'crypto';
@@ -15,6 +15,7 @@ import * as crypto from 'crypto';
 export class S3StorageService {
   private readonly s3Client: S3Client;
   private readonly bucket: string;
+  private readonly region: string;
   private readonly logger = new Logger(S3StorageService.name);
   private readonly expiresInSeconds: number;
 
@@ -23,13 +24,20 @@ export class S3StorageService {
     private prismaService: PrismaService,
   ) {
     this.bucket = this.configService.get<string>('AWS_S3_BUCKET', '');
-    this.expiresInSeconds = this.configService.get<number>('AWS_PRESIGNED_URL_EXPIRES', 900); // 15 minutes
+    this.region = this.configService.get<string>('AWS_REGION', '');
+    this.expiresInSeconds = this.configService.get<number>(
+      'AWS_PRESIGNED_URL_EXPIRES',
+      900,
+    ); // 15 minutes
 
     this.s3Client = new S3Client({
-      region: this.configService.get<string>('AWS_REGION', ''),
+      region: this.region,
       credentials: {
         accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID', ''),
-        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY', ''),
+        secretAccessKey: this.configService.get<string>(
+          'AWS_SECRET_ACCESS_KEY',
+          '',
+        ),
       },
     });
   }
@@ -38,13 +46,13 @@ export class S3StorageService {
    * Creates a presigned URL for uploading a file directly to S3
    */
   async createPresignedUploadUrl(
-    filename: string, 
-    mimetype: string, 
-    userId?: string
+    filename: string,
+    mimetype: string,
+    userId?: string,
   ) {
     // Generate a unique key for the file
     const key = this.generateFileKey(filename);
-    
+
     // Create the file record in the database with PENDING status
     const file = await this.prismaService.file.create({
       data: {
@@ -126,22 +134,29 @@ export class S3StorageService {
         Bucket: this.bucket,
         Key: file.key,
       });
-      
+
       const response = await this.s3Client.send(headCommand);
-      
-      // Update the file status and size in the database
+
+      // Generate permanent public URL
+      const publicUrl = this.generatePublicUrl(file.key);
+
+      // Update the file status, size, and permanent URL in the database
       await this.prismaService.file.update({
         where: { id: fileId },
         data: {
           status: 'UPLOADED',
           size: response.ContentLength,
+          url: publicUrl,
         },
       });
 
       return true;
     } catch (error) {
-      this.logger.error(`Error confirming file upload: ${error.message}`, error.stack);
-      
+      this.logger.error(
+        `Error confirming file upload: ${error.message}`,
+        error.stack,
+      );
+
       // Update the file status to FAILED
       await this.prismaService.file.update({
         where: { id: fileId },
@@ -149,7 +164,7 @@ export class S3StorageService {
           status: 'FAILED',
         },
       });
-      
+
       return false;
     }
   }
@@ -172,9 +187,9 @@ export class S3StorageService {
         Bucket: this.bucket,
         Key: file.key,
       });
-      
+
       await this.s3Client.send(deleteCommand);
-      
+
       // Delete the file record from the database
       await this.prismaService.file.delete({
         where: { id: fileId },
@@ -203,13 +218,44 @@ export class S3StorageService {
   }
 
   /**
+   * Gets the permanent public URL for a file
+   */
+  async getPublicUrl(fileId: string) {
+    const file = await this.prismaService.file.findUnique({
+      where: { id: fileId },
+    });
+
+    if (!file) {
+      throw new Error(`File with ID ${fileId} not found`);
+    }
+
+    if (file.status !== 'UPLOADED') {
+      throw new Error(`File with ID ${fileId} is not uploaded yet`);
+    }
+
+    // Return the stored permanent URL or generate it if not stored
+    return {
+      fileId: file.id,
+      filename: file.filename,
+      url: file.url || this.generatePublicUrl(file.key),
+    };
+  }
+
+  /**
+   * Generates a permanent public URL for the file in S3
+   */
+  private generatePublicUrl(key: string): string {
+    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
+  }
+
+  /**
    * Generates a unique key for the file in S3
    */
   private generateFileKey(filename: string): string {
     const timestamp = Date.now();
     const randomString = crypto.randomBytes(16).toString('hex');
     const extension = filename.split('.').pop();
-    
+
     return `${timestamp}-${randomString}.${extension}`;
   }
 }

@@ -1,6 +1,3 @@
-// Warehouse DTOs
-export * from './warehouse.dto';
-
 // Inventory Item DTOs
 export * from './inventory-item.dto';
 

@@ -4,10 +4,7 @@ import { JobsService } from './jobs.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [
-    ScheduleModule.forRoot(),
-    NotificationsModule,
-  ],
+  imports: [ScheduleModule.forRoot(), NotificationsModule],
   providers: [JobsService],
   exports: [JobsService],
 })

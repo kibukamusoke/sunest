@@ -1,20 +1,40 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsEmail, IsOptional, IsEnum, IsUrl, IsPhoneNumber, Length, Matches } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsEnum,
+  IsUrl,
+  IsPhoneNumber,
+  Length,
+  Matches,
+  IsNotEmpty,
+  ValidateIf,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class MerchantApplicationDto {
-  @ApiProperty({ description: 'Merchant business name', example: 'TechParts Supplier Inc.' })
+  @ApiProperty({
+    description: 'Merchant business name',
+    example: 'TechParts Supplier Inc.',
+  })
   @IsString()
   @Length(2, 100)
   name: string;
 
-  @ApiPropertyOptional({ description: 'Display name for the merchant', example: 'TechParts Supplier' })
+  @ApiPropertyOptional({
+    description: 'Display name for the merchant',
+    example: 'TechParts Supplier',
+  })
   @IsOptional()
   @IsString()
   @Length(2, 100)
   displayName?: string;
 
-  @ApiPropertyOptional({ description: 'Business description', example: 'Premium electronic components supplier' })
+  @ApiPropertyOptional({
+    description: 'Business description',
+    example: 'Premium electronic components supplier',
+  })
   @IsOptional()
   @IsString()
   @Length(10, 500)
@@ -24,21 +44,33 @@ export class MerchantApplicationDto {
   @IsEnum(['manufacturer', 'distributor', 'retailer', 'wholesaler'])
   businessType: string;
 
-  @ApiProperty({ description: 'Business contact email', example: 'admin@techparts.com' })
+  @ApiProperty({
+    description: 'Business contact email',
+    example: 'admin@techparts.com',
+  })
   @IsEmail()
   contactEmail: string;
 
-  @ApiPropertyOptional({ description: 'Business contact phone', example: '+1-555-0200' })
+  @ApiPropertyOptional({
+    description: 'Business contact phone',
+    example: '+1-555-0200',
+  })
   @IsOptional()
   @IsString()
   contactPhone?: string;
 
-  @ApiPropertyOptional({ description: 'Business website', example: 'https://techparts.com' })
+  @ApiPropertyOptional({
+    description: 'Business website',
+    example: 'https://techparts.com',
+  })
   @IsOptional()
   @IsUrl()
   website?: string;
 
-  @ApiProperty({ description: 'Primary business address line 1', example: '456 Supplier Blvd' })
+  @ApiProperty({
+    description: 'Primary business address line 1',
+    example: '456 Supplier Blvd',
+  })
   @IsString()
   @Length(1, 100)
   addressLine1: string;
@@ -69,18 +101,7 @@ export class MerchantApplicationDto {
   @Length(2, 50)
   country: string;
 
-  @ApiProperty({ description: 'Tax identification number', example: 'TECH789123456' })
-  @IsString()
-  @Length(1, 50)
-  taxId: string;
-
-  @ApiPropertyOptional({ description: 'Business registration number', example: 'REG123456789' })
-  @IsOptional()
-  @IsString()
-  @Length(1, 50)
-  registrationNumber?: string;
-
-  @ApiPropertyOptional({ description: 'Minimum order value', example: 100.00 })
+  @ApiPropertyOptional({ description: 'Minimum order value', example: 100.0 })
   @IsOptional()
   @Transform(({ value }) => parseFloat(value))
   minimumOrderValue?: number;
@@ -98,26 +119,66 @@ export class MerchantApplicationDto {
   returnPolicy?: string;
 
   // Malaysia E-Invoicing fields
-  @ApiPropertyOptional({ description: 'Tax Identification Number for e-invoicing', example: 'TIN123456789' })
+  @ApiPropertyOptional({
+    description: 'Tax Identification Number for e-invoicing',
+    example: 'TIN123456789',
+  })
   @IsOptional()
+  @ValidateIf((o) => o.tin && o.tin.length > 0)
   @IsString()
   @Length(1, 50)
   tin?: string;
 
-  @ApiPropertyOptional({ description: 'Type of identification document', enum: ['NRIC', 'BRN', 'PASSPORT', 'ARMY'], example: 'BRN' })
+  @ApiPropertyOptional({
+    description: 'Type of identification document',
+    enum: ['NRIC', 'BRN', 'PASSPORT', 'ARMY'],
+    example: 'BRN',
+  })
   @IsOptional()
   @IsEnum(['NRIC', 'BRN', 'PASSPORT', 'ARMY'])
   idType?: 'NRIC' | 'BRN' | 'PASSPORT' | 'ARMY';
 
-  @ApiPropertyOptional({ description: 'Identification document number', example: '201501012345' })
+  @ApiPropertyOptional({
+    description: 'Identification document number',
+    example: '201501012345',
+  })
   @IsOptional()
+  @ValidateIf((o) => o.idValue && o.idValue.length > 0)
   @IsString()
   @Length(1, 50)
   idValue?: string;
 
-  @ApiPropertyOptional({ description: 'Opt-in for e-invoice submission', default: false })
+  @ApiPropertyOptional({
+    description: 'Opt-in for e-invoice submission',
+    default: false,
+  })
   @IsOptional()
   eInvoiceOptIn?: boolean;
+
+  // User account creation fields
+  @ApiProperty({
+    description: 'Password for merchant account',
+    example: 'SecurePassword123!',
+  })
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
+  @ApiProperty({
+    description: 'First name of the primary contact',
+    example: 'John',
+  })
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @ApiProperty({
+    description: 'Last name of the primary contact',
+    example: 'Doe',
+  })
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
 }
 
 export class MerchantApplicationResponseDto {
@@ -194,8 +255,6 @@ export class CheckApplicationStatusDto {
     state?: string;
     postalCode?: string;
     country?: string;
-    taxId?: string;
-    registrationNumber?: string;
     tin?: string;
     idType?: string;
     idValue?: string;

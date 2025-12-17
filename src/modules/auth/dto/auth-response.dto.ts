@@ -8,7 +8,7 @@ export class LoginResponseDto {
 
   @ApiProperty({ description: 'JWT refresh token' })
   refresh_token: string;
-  
+
   @ApiProperty({ description: 'User ID' })
   userId: string;
 }
@@ -21,13 +21,19 @@ export class RefreshTokenResponseDto {
 export class RegisterResponseDto extends User {}
 
 export class SuccessResponseDto {
-  @ApiProperty({ description: 'Whether the operation was successful', example: true })
+  @ApiProperty({
+    description: 'Whether the operation was successful',
+    example: true,
+  })
   success: boolean;
 
-  @ApiProperty({ description: 'Optional message', example: 'Operation completed successfully', required: false })
+  @ApiProperty({
+    description: 'Optional message',
+    example: 'Operation completed successfully',
+    required: false,
+  })
   message?: string;
 }
-
 
 export class ProfileResponseDto extends User {
   //@ApiPropertyOptional({ description: 'Primary shipping address' })
@@ -35,7 +41,7 @@ export class ProfileResponseDto extends User {
   constructor(partial: Partial<ProfileResponseDto>) {
     super(partial);
   }
-  
+
   //setShippingAddresses(shippingAddresses: ShippingAddress[]) {
   //  this.shippingAddresses = shippingAddresses;
   //}

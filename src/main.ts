@@ -23,6 +23,26 @@ async function bootstrap() {
 
     console.log('Application instance created successfully.');
 
+    /**
+     * Prevent stale API responses caused by ETag-based 304 Not Modified.
+     * Our order details responses are dynamic (e.g. shipments added later),
+     * and the storefront can otherwise reuse an older cached body.
+     */
+    app.disable('etag');
+    app.use(
+      '/api',
+      (
+        _req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+      ) => {
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        next();
+      },
+    );
+
     console.log('Getting ConfigService...');
     const configService = app.get(ConfigService);
 
@@ -38,8 +58,6 @@ async function bootstrap() {
 
     // Enable graceful shutdown
     prismaService.enableShutdownHooks();
-
-
 
     // Setup view engine
     app.setBaseViewsDir(join(__dirname, '..', 'src/views'));
@@ -63,7 +81,11 @@ async function bootstrap() {
           directives: {
             defaultSrc: [`'self'`],
             styleSrc: [`'self'`, `'unsafe-inline'`, 'https://cdn.jsdelivr.net'],
-            scriptSrc: [`'self'`, `'unsafe-inline'`, 'https://cdn.jsdelivr.net'],
+            scriptSrc: [
+              `'self'`,
+              `'unsafe-inline'`,
+              'https://cdn.jsdelivr.net',
+            ],
             imgSrc: [`'self'`, 'data:'],
             connectSrc: [`'self'`],
             fontSrc: [`'self'`, 'https://cdn.jsdelivr.net'],
@@ -72,7 +94,21 @@ async function bootstrap() {
       }),
     );
     app.enableCors({
-      origin: ['https://hwadmin.tvxlabs.com', 'http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'],
+      origin: [
+        'https://hwadmin.tvxlabs.com',
+        'https://hwadmin.intelibuy.my',
+        'https://merchant.intelibuy.my',
+        'https://www.intelibuy.my',
+        'https://intelibuy.my',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://localhost:8081',
+        'http://localhost:8082',
+        'http://localhost:8083',
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3005',
+      ],
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
       allowedHeaders: 'Content-Type,Accept,Authorization',
@@ -80,7 +116,6 @@ async function bootstrap() {
 
     // Set global prefix for API routes
     app.setGlobalPrefix('api', { exclude: ['reset-password'] });
-
 
     // Swagger documentation
     const config = new DocumentBuilder()

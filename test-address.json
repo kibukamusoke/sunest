@@ -1,0 +1,16 @@
+{
+  "companyId": "528e5865-acec-456e-9050-677ed49e1322",
+  "type": "SHIPPING",
+  "name": "Test Office",
+  "contactName": "John Doe",
+  "contactPhone": "+1-555-123-4567",
+  "contactEmail": "john@testcompany.com",
+  "addressLine1": "123 Business St",
+  "addressLine2": "Suite 100",
+  "city": "Test City",
+  "state": "TC",
+  "postalCode": "12345",
+  "country": "US",
+  "isDefault": true,
+  "deliveryInstructions": "Ring doorbell twice"
+}

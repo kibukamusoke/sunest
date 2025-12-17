@@ -1,4 +1,14 @@
-import { Controller, Get, Param, UseGuards, NotFoundException, Patch, Body, Req, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  UseGuards,
+  NotFoundException,
+  Patch,
+  Body,
+  Req,
+  Query,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
 import {
@@ -8,7 +18,7 @@ import {
   ApiTags,
   ApiParam,
   ApiBody,
-  ApiQuery
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -17,7 +27,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) { }
+  constructor(private usersService: UsersService) {}
 
   @Get('roles')
   @UseGuards(JwtAuthGuard)
@@ -36,12 +46,12 @@ export class UsersController {
             properties: {
               id: { type: 'string' },
               name: { type: 'string' },
-              description: { type: 'string' }
-            }
-          }
-        }
-      }
-    }
+              description: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
   })
   async getAllRoles() {
     return this.usersService.getAllRoles();
@@ -51,11 +61,33 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users with pagination and filtering' })
-  @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
-  @ApiQuery({ name: 'limit', required: false, description: 'Items per page', example: 20 })
-  @ApiQuery({ name: 'search', required: false, description: 'Search term for email or name' })
-  @ApiQuery({ name: 'status', required: false, description: 'Filter by user status (active/inactive)' })
-  @ApiQuery({ name: 'role', required: false, description: 'Filter by user role (admin/user)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page',
+    example: 20,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search term for email or name',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by user status (active/inactive)',
+  })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    description: 'Filter by user role (admin/user)',
+  })
   @ApiQuery({ name: 'appId', required: false, description: 'Filter by app ID' })
   @ApiResponse({
     status: 200,
@@ -67,9 +99,9 @@ export class UsersController {
         total: { type: 'number' },
         page: { type: 'number' },
         limit: { type: 'number' },
-        pages: { type: 'number' }
-      }
-    }
+        pages: { type: 'number' },
+      },
+    },
   })
   async getAllUsers(
     @Query('page') page: string = '1',
@@ -98,7 +130,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'Returns user information',
-    type: User
+    type: User,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   async findOne(@Param('id') id: string): Promise<User> {
@@ -121,27 +153,33 @@ export class UsersController {
         roles: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Array of role names'
-        }
+          description: 'Array of role names',
+        },
       },
-      required: ['roles']
-    }
+      required: ['roles'],
+    },
   })
   @ApiResponse({
     status: 200,
     description: 'User roles updated successfully',
-    type: User
+    type: User,
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   async updateUserRoles(
     @Param('id') userId: string,
     @Body() body: { roles: string[] },
-    @Req() req
+    @Req() req,
   ): Promise<User> {
     // Check if current user is admin
     const currentUser = await this.usersService.findById(req.user.userId);
-    if (!currentUser || !currentUser.hasRole('admin') && !currentUser.hasRole('system_admin')) {
+    if (
+      !currentUser ||
+      (!currentUser.hasRole('admin') && !currentUser.hasRole('system_admin'))
+    ) {
       throw new HttpException('Admin access required', HttpStatus.FORBIDDEN);
     }
 
@@ -154,14 +192,17 @@ export class UsersController {
   @ApiOperation({ summary: 'Update user profile' })
   @ApiBody({
     type: UpdateProfileDto,
-    description: 'User profile data to update'
+    description: 'User profile data to update',
   })
   @ApiResponse({
     status: 200,
     description: 'Profile updated successfully',
-    type: User
+    type: User,
   })
-  async updateProfile(@Req() req, @Body() updateProfileDto: UpdateProfileDto): Promise<User> {
+  async updateProfile(
+    @Req() req,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ): Promise<User> {
     const userId = req.user.userId;
     return this.usersService.updateProfile(userId, updateProfileDto);
   }

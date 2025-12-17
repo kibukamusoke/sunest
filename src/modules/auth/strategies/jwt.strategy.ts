@@ -60,24 +60,28 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       userId: user.id,
       email: user.email,
-      roles: user.roles?.map(role => role.name) || [],
-      permissions: user.roles?.flatMap(role => role.permissions.map(p => p.name)) || [],
-      companies: user.companies?.map(uc => ({
-        id: uc.company.id,
-        name: uc.company.name,
-        role: uc.role,
-      })) || [],
-      merchants: user.merchants?.map(um => ({
-        id: um.merchant.id,
-        name: um.merchant.name,
-        role: um.role,
-        permissions: {
-          canManageProducts: um.canManageProducts,
-          canManageOrders: um.canManageOrders,
-          canManagePricing: um.canManagePricing,
-          canViewAnalytics: um.canViewAnalytics,
-        },
-      })) || [],
+      roles: user.roles?.map((role) => role.name) || [],
+      permissions:
+        user.roles?.flatMap((role) => role.permissions.map((p) => p.name)) ||
+        [],
+      companies:
+        user.companies?.map((uc) => ({
+          id: uc.company.id,
+          name: uc.company.name,
+          role: uc.role,
+        })) || [],
+      merchants:
+        user.merchants?.map((um) => ({
+          id: um.merchant.id,
+          name: um.merchant.name,
+          role: um.role,
+          permissions: {
+            canManageProducts: um.canManageProducts,
+            canManageOrders: um.canManageOrders,
+            canManagePricing: um.canManagePricing,
+            canViewAnalytics: um.canViewAnalytics,
+          },
+        })) || [],
     };
   }
 }

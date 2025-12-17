@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsArray, IsEnum, IsObject, IsUUID, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsObject,
+  IsUUID,
+  IsDateString,
+} from 'class-validator';
 import { NotificationStatus } from '@prisma/client';
 
 export interface EmailRecipient {
@@ -236,7 +244,10 @@ export class EmailQueueListQueryDto {
   @IsOptional()
   limit?: number;
 
-  @ApiPropertyOptional({ enum: NotificationStatus, description: 'Filter by status' })
+  @ApiPropertyOptional({
+    enum: NotificationStatus,
+    description: 'Filter by status',
+  })
   @IsEnum(NotificationStatus)
   @IsOptional()
   status?: NotificationStatus;
@@ -268,7 +279,10 @@ export class EmailQueueListQueryDto {
 }
 
 export class EmailQueueListResponseDto {
-  @ApiProperty({ type: [EmailQueueResponseDto], description: 'List of queued emails' })
+  @ApiProperty({
+    type: [EmailQueueResponseDto],
+    description: 'List of queued emails',
+  })
   emails: EmailQueueResponseDto[];
 
   @ApiProperty({ description: 'Total count' })

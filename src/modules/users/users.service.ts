@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { User } from './user.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.prisma.user.findFirst({
@@ -67,8 +71,6 @@ export class UsersService {
 
     return this.mapToUserEntity(user);
   }
-
-
 
   async findById(id: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
@@ -160,9 +162,11 @@ export class UsersService {
         jobTitle: userData.jobTitle,
         department: userData.department,
         approvalLimit: userData.approvalLimit,
-        roles: userData.roles ? {
-          connect: userData.roles.map(roleId => ({ id: roleId }))
-        } : undefined,
+        roles: userData.roles
+          ? {
+              connect: userData.roles.map((roleId) => ({ id: roleId })),
+            }
+          : undefined,
       },
       include: {
         roles: {
@@ -199,20 +203,23 @@ export class UsersService {
     return this.mapToUserEntity(user);
   }
 
-  async update(id: string, userData: {
-    email?: string;
-    password?: string;
-    displayName?: string;
-    firstName?: string;
-    lastName?: string;
-    phoneNumber?: string;
-    avatar?: string;
-    isActive?: boolean;
-    emailVerified?: boolean;
-    jobTitle?: string;
-    department?: string;
-    approvalLimit?: number;
-  }): Promise<User> {
+  async update(
+    id: string,
+    userData: {
+      email?: string;
+      password?: string;
+      displayName?: string;
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string;
+      avatar?: string;
+      isActive?: boolean;
+      emailVerified?: boolean;
+      jobTitle?: string;
+      department?: string;
+      approvalLimit?: number;
+    },
+  ): Promise<User> {
     const updateData: any = { ...userData };
 
     if (userData.password) {
@@ -262,8 +269,8 @@ export class UsersService {
       where: { id: userId },
       data: {
         roles: {
-          set: roleIds.map(id => ({ id }))
-        }
+          set: roleIds.map((id) => ({ id })),
+        },
       },
       include: {
         roles: {
@@ -437,7 +444,7 @@ export class UsersService {
     ]);
 
     return {
-      users: users.map(user => this.mapToUserEntity(user)),
+      users: users.map((user) => this.mapToUserEntity(user)),
       total,
       page,
       limit,
@@ -468,7 +475,10 @@ export class UsersService {
     };
   }
 
-  async updateRefreshToken(userId: string, refreshToken: string | null): Promise<void> {
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+  ): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
       data: { refreshToken },
@@ -503,7 +513,9 @@ export class UsersService {
     return this.mapToUserEntity(user);
   }
 
-  async createPasswordResetToken(email: string): Promise<{ resetToken: string; user: User }> {
+  async createPasswordResetToken(
+    email: string,
+  ): Promise<{ resetToken: string; user: User }> {
     const resetToken = Math.random().toString(36).substr(2, 15);
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
@@ -569,17 +581,20 @@ export class UsersService {
     return this.updateRoles(userId, roleIds);
   }
 
-  async updateProfile(userId: string, profileData: {
-    displayName?: string;
-    firstName?: string;
-    lastName?: string;
-    phoneNumber?: string;
-    avatar?: string;
-    jobTitle?: string;
-    department?: string;
-    idType?: 'NRIC' | 'BRN' | 'PASSPORT' | 'ARMY';
-    idValue?: string;
-  }): Promise<User> {
+  async updateProfile(
+    userId: string,
+    profileData: {
+      displayName?: string;
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string;
+      avatar?: string;
+      jobTitle?: string;
+      department?: string;
+      idType?: 'NRIC' | 'BRN' | 'PASSPORT' | 'ARMY';
+      idValue?: string;
+    },
+  ): Promise<User> {
     return this.update(userId, profileData);
   }
 
@@ -607,18 +622,20 @@ export class UsersService {
       idType: user.idType,
       idValue: user.idValue,
       roles: user.roles || [],
-      companies: user.companies?.map((uc: any) => ({
-        id: uc.company.id,
-        name: uc.company.name,
-        displayName: uc.company.displayName,
-        role: uc.role,
-      })) || [],
-      merchants: user.merchants?.map((um: any) => ({
-        id: um.merchant.id,
-        name: um.merchant.name,
-        displayName: um.merchant.displayName,
-        role: um.role,
-      })) || [],
+      companies:
+        user.companies?.map((uc: any) => ({
+          id: uc.company.id,
+          name: uc.company.name,
+          displayName: uc.company.displayName,
+          role: uc.role,
+        })) || [],
+      merchants:
+        user.merchants?.map((um: any) => ({
+          id: um.merchant.id,
+          name: um.merchant.name,
+          displayName: um.merchant.displayName,
+          role: um.role,
+        })) || [],
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });

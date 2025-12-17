@@ -28,12 +28,14 @@
     "docker:down": "docker-compose down",
     "openapi:admin": "rimraf /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/admin/src/lib/sdk && npx openapi-typescript-codegen --input ./openapi/swagger.json --output /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/admin/src/lib/sdk --client axios --name HardwareWorldAPI",
     "openapi:merchant": "rimraf /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/merchant/src/lib/sdk && npx openapi-typescript-codegen --input ./openapi/swagger.json --output /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/merchant/src/lib/sdk --client axios --name HardwareWorldAPI",
-    "sdk": "npm run openapi:admin && npm run openapi:merchant",
+    "openapi:storefront": "rimraf /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/storefront/src/lib/sdk && npx openapi-typescript-codegen --input ./openapi/swagger.json --output /Users/trevorsuna/POLARIS/MAVERICK/HardwareWorld/storefront/src/lib/sdk --client axios --name HardwareWorldAPI",
+    "sdk": "npm run openapi:admin && npm run openapi:merchant && npm run openapi:storefront",
     "deploy": "npm run build && docker buildx build --platform linux/arm64 -t $ECR_REGISTRY/hardwareworld:0.2 --push ."
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",
     "@aws-sdk/s3-request-presigner": "^3.782.0",
+    "@googlemaps/google-maps-services-js": "^3.4.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",

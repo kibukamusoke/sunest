@@ -6,19 +6,21 @@ import { PrismaService } from '../../config/prisma.service';
 import { S3StorageService } from '../storage/s3-storage.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { StorageModule } from '../storage/storage.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-    imports: [
-        NotificationsModule,
-        StorageModule, // For document uploads
-    ],
-    controllers: [MerchantController],
-    providers: [
-        MerchantService,
-        MerchantDocumentService,
-        PrismaService,
-        S3StorageService,
-    ],
-    exports: [MerchantService],
+  imports: [
+    NotificationsModule,
+    StorageModule, // For document uploads
+    UsersModule, // For user account creation
+  ],
+  controllers: [MerchantController],
+  providers: [
+    MerchantService,
+    MerchantDocumentService,
+    PrismaService,
+    S3StorageService,
+  ],
+  exports: [MerchantService],
 })
-export class MerchantManagementModule { }
+export class MerchantManagementModule {}

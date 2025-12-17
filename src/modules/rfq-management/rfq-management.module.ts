@@ -6,15 +6,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
 
 @Module({
-    imports: [
-        NotificationsModule,
-        UsersModule,
-    ],
-    controllers: [RFQManagementController],
-    providers: [
-        RFQManagementService,
-        PrismaService,
-    ],
-    exports: [RFQManagementService],
+  imports: [NotificationsModule, UsersModule],
+  controllers: [RFQManagementController],
+  providers: [RFQManagementService, PrismaService],
+  exports: [RFQManagementService],
 })
-export class RFQManagementModule { }
+export class RFQManagementModule {}

@@ -12,10 +12,10 @@ export * from './saved-items.dto';
 
 // Re-export Prisma enums for convenience
 export {
-    CartItemSource,
-    CartItemStatus,
-    AddressType,
-    PaymentMethod,
-    CheckoutStatus,
-    ApprovalStatus,
+  CartItemSource,
+  CartItemStatus,
+  AddressType,
+  PaymentMethod,
+  CheckoutStatus,
+  ApprovalStatus,
 } from '@prisma/client';

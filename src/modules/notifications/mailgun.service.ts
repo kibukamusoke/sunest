@@ -16,16 +16,20 @@ export class MailgunService implements OnModuleInit {
   constructor(
     private configService: ConfigService,
     private mailgunService: Mailgun,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     try {
       this.domain = this.configService.get<string>('MAILGUN_DOMAIN') || '';
-      this.fromEmail = this.configService.get<string>('MAILGUN_FROM_EMAIL') || '';
-      this.fromName = this.configService.get<string>('MAILGUN_FROM_NAME') || 'QART';
+      this.fromEmail =
+        this.configService.get<string>('MAILGUN_FROM_EMAIL') || '';
+      this.fromName =
+        this.configService.get<string>('MAILGUN_FROM_NAME') || 'QART';
 
       if (!this.domain || !this.fromEmail) {
-        this.logger.warn('Mailgun configuration incomplete. Email sending will be disabled.');
+        this.logger.warn(
+          'Mailgun configuration incomplete. Email sending will be disabled.',
+        );
         return;
       }
 
@@ -60,35 +64,41 @@ export class MailgunService implements OnModuleInit {
         subject,
         text,
         html: html || '',
-        attachment: attachments && attachments.length > 0
-          ? attachments.map((attachment) => ({
-            filename: attachment.filename,
-            data: Buffer.from(attachment.data, 'base64'),
-          }))
-          : '',
-        cc: cc && cc.length > 0
-          ? cc
-            .map((recipient) =>
-              recipient.name
-                ? `${recipient.name} <${recipient.email}>`
-                : recipient.email,
-            )
-            .join(',')
-          : '',
-        bcc: bcc && bcc.length > 0
-          ? bcc
-            .map((recipient) =>
-              recipient.name
-                ? `${recipient.name} <${recipient.email}>`
-                : recipient.email,
-            )
-            .join(',')
-          : '',
+        attachment:
+          attachments && attachments.length > 0
+            ? attachments.map((attachment) => ({
+                filename: attachment.filename,
+                data: Buffer.from(attachment.data, 'base64'),
+              }))
+            : '',
+        cc:
+          cc && cc.length > 0
+            ? cc
+                .map((recipient) =>
+                  recipient.name
+                    ? `${recipient.name} <${recipient.email}>`
+                    : recipient.email,
+                )
+                .join(',')
+            : '',
+        bcc:
+          bcc && bcc.length > 0
+            ? bcc
+                .map((recipient) =>
+                  recipient.name
+                    ? `${recipient.name} <${recipient.email}>`
+                    : recipient.email,
+                )
+                .join(',')
+            : '',
         'o:testmode': 'no',
         'h:X-Mailgun-Variables': JSON.stringify({ system: 'qart' }),
       };
 
-      const response = await this.mailgunService.createEmail(this.domain, options);
+      const response = await this.mailgunService.createEmail(
+        this.domain,
+        options,
+      );
 
       this.logger.debug(`Email sent successfully: ${response.id}`);
       return true;
@@ -126,10 +136,16 @@ export class MailgunService implements OnModuleInit {
         cc: '',
         bcc: '',
         'o:testmode': 'no',
-        'h:X-Mailgun-Variables': JSON.stringify({ ...templateVars, system: 'qart' }),
+        'h:X-Mailgun-Variables': JSON.stringify({
+          ...templateVars,
+          system: 'qart',
+        }),
       };
 
-      const response = await this.mailgunService.createEmail(this.domain, options);
+      const response = await this.mailgunService.createEmail(
+        this.domain,
+        options,
+      );
 
       this.logger.debug(`Template email sent successfully: ${response.id}`);
       return true;
@@ -156,13 +172,14 @@ export class MailgunService implements OnModuleInit {
     const emailContent = `
       <h2>System Notification</h2>
       <p>${message}</p>
-      ${error
-        ? `
+      ${
+        error
+          ? `
         <h3>Error Details</h3>
         <p><strong>Message:</strong> ${error.message}</p>
         <pre>${error.stack}</pre>
       `
-        : ''
+          : ''
       }
     `;
 
@@ -170,21 +187,31 @@ export class MailgunService implements OnModuleInit {
       from: `${this.fromName} <${this.fromEmail}>`,
       to: adminEmail,
       subject: `[SYSTEM] ${subject}`,
-      text: message + (error ? `\n\nError: ${error.message}\n${error.stack}` : ''),
+      text:
+        message + (error ? `\n\nError: ${error.message}\n${error.stack}` : ''),
       html: emailContent,
       attachment: '',
       cc: '',
       bcc: '',
       'o:testmode': 'no',
-      'h:X-Mailgun-Variables': JSON.stringify({ system: 'qart', type: 'system_notification' }),
+      'h:X-Mailgun-Variables': JSON.stringify({
+        system: 'qart',
+        type: 'system_notification',
+      }),
     };
 
     try {
-      const response = await this.mailgunService.createEmail(this.domain, options);
+      const response = await this.mailgunService.createEmail(
+        this.domain,
+        options,
+      );
       this.logger.debug(`System email sent successfully: ${response.id}`);
       return true;
     } catch (error) {
-      this.logger.error(`Error sending system email: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error sending system email: ${error.message}`,
+        error.stack,
+      );
       return false;
     }
   }
@@ -224,15 +251,25 @@ export class MailgunService implements OnModuleInit {
       cc: '',
       bcc: '',
       'o:testmode': 'no',
-      'h:X-Mailgun-Variables': JSON.stringify({ system: 'qart', type: 'verification', user: userName }),
+      'h:X-Mailgun-Variables': JSON.stringify({
+        system: 'qart',
+        type: 'verification',
+        user: userName,
+      }),
     };
 
     try {
-      const response = await this.mailgunService.createEmail(this.domain, options);
+      const response = await this.mailgunService.createEmail(
+        this.domain,
+        options,
+      );
       this.logger.debug(`Verification email sent successfully: ${response.id}`);
       return true;
     } catch (error) {
-      this.logger.error(`Error sending verification email: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error sending verification email: ${error.message}`,
+        error.stack,
+      );
       return false;
     }
   }
@@ -272,15 +309,27 @@ export class MailgunService implements OnModuleInit {
       cc: '',
       bcc: '',
       'o:testmode': 'no',
-      'h:X-Mailgun-Variables': JSON.stringify({ system: 'qart', type: 'password_reset', user: userName }),
+      'h:X-Mailgun-Variables': JSON.stringify({
+        system: 'qart',
+        type: 'password_reset',
+        user: userName,
+      }),
     };
 
     try {
-      const response = await this.mailgunService.createEmail(this.domain, options);
-      this.logger.debug(`Password reset email sent successfully: ${response.id}`);
+      const response = await this.mailgunService.createEmail(
+        this.domain,
+        options,
+      );
+      this.logger.debug(
+        `Password reset email sent successfully: ${response.id}`,
+      );
       return true;
     } catch (error) {
-      this.logger.error(`Error sending password reset email: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error sending password reset email: ${error.message}`,
+        error.stack,
+      );
       return false;
     }
   }
@@ -316,15 +365,25 @@ export class MailgunService implements OnModuleInit {
       cc: '',
       bcc: '',
       'o:testmode': 'no',
-      'h:X-Mailgun-Variables': JSON.stringify({ system: 'qart', type: 'welcome', user: userName }),
+      'h:X-Mailgun-Variables': JSON.stringify({
+        system: 'qart',
+        type: 'welcome',
+        user: userName,
+      }),
     };
 
     try {
-      const response = await this.mailgunService.createEmail(this.domain, options);
+      const response = await this.mailgunService.createEmail(
+        this.domain,
+        options,
+      );
       this.logger.debug(`Welcome email sent successfully: ${response.id}`);
       return true;
     } catch (error) {
-      this.logger.error(`Error sending welcome email: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error sending welcome email: ${error.message}`,
+        error.stack,
+      );
       return false;
     }
   }

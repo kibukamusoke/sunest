@@ -1,17 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { 
-  IsString, 
-  IsOptional, 
-  IsBoolean, 
-  IsDecimal, 
-  IsUUID, 
-  IsArray, 
-  IsInt, 
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsDecimal,
+  IsUUID,
+  IsArray,
+  IsInt,
   IsUrl,
-  MinLength, 
-  MaxLength, 
+  MinLength,
+  MaxLength,
   Min,
-  IsObject
+  IsObject,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -58,7 +58,7 @@ export class CreateProductVariantDto {
 
   @ApiPropertyOptional({
     description: 'Variant-specific cost price',
-    example: 230.00,
+    example: 230.0,
     minimum: 0,
   })
   @IsOptional()
@@ -169,7 +169,7 @@ export class UpdateProductVariantDto {
 
   @ApiPropertyOptional({
     description: 'Variant-specific cost price',
-    example: 230.00,
+    example: 230.0,
     minimum: 0,
   })
   @IsOptional()
@@ -293,7 +293,7 @@ export class ProductVariantResponseDto {
 
   @ApiPropertyOptional({
     description: 'Variant-specific cost price',
-    example: 230.00,
+    example: 230.0,
   })
   costPrice?: number;
 

@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression, SchedulerRegistry, Timeout } from '@nestjs/schedule';
+import {
+  Cron,
+  CronExpression,
+  SchedulerRegistry,
+  Timeout,
+} from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { NotificationService } from '../notifications/notification.service';
 import { PrismaService } from '../../config/prisma.service';
@@ -12,7 +17,7 @@ export class JobsService {
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly prismaService: PrismaService,
     private readonly notificationService: NotificationService,
-  ) { }
+  ) {}
 
   /**
    * Run on application startup after a delay
@@ -31,10 +36,15 @@ export class JobsService {
       // - Check merchant approval status updates
       // - Initialize inventory sync jobs
       // - Validate product catalog integrity
-
     } catch (error) {
-      this.logger.error(`Error during startup tasks: ${error.message}`, error.stack);
-      await this.notificationService.sendSystemAlert('Hardware World startup tasks failed', error);
+      this.logger.error(
+        `Error during startup tasks: ${error.message}`,
+        error.stack,
+      );
+      await this.notificationService.sendSystemAlert(
+        'Hardware World startup tasks failed',
+        error,
+      );
     }
   }
 
@@ -49,8 +59,14 @@ export class JobsService {
       const count = await this.cleanupExpiredTokens();
       this.logger.log(`Scheduled cleanup removed ${count} expired tokens`);
     } catch (error) {
-      this.logger.error(`Error cleaning up expired tokens: ${error.message}`, error.stack);
-      await this.notificationService.sendSystemAlert('Token cleanup job failed', error);
+      this.logger.error(
+        `Error cleaning up expired tokens: ${error.message}`,
+        error.stack,
+      );
+      await this.notificationService.sendSystemAlert(
+        'Token cleanup job failed',
+        error,
+      );
     }
   }
 
@@ -72,8 +88,14 @@ export class JobsService {
 
       this.logger.log(`Archived ${count} old records`);
     } catch (error) {
-      this.logger.error(`Error archiving old data: ${error.message}`, error.stack);
-      await this.notificationService.sendSystemAlert('Data archiving job failed', error);
+      this.logger.error(
+        `Error archiving old data: ${error.message}`,
+        error.stack,
+      );
+      await this.notificationService.sendSystemAlert(
+        'Data archiving job failed',
+        error,
+      );
     }
   }
 
@@ -100,29 +122,46 @@ export class JobsService {
 
       await this.notificationService.sendSystemAlert(
         'Weekly Business Report Generated',
-        new Error(reportMessage)
+        new Error(reportMessage),
       );
 
-      this.logger.log('Hardware World weekly report generated and notification sent');
+      this.logger.log(
+        'Hardware World weekly report generated and notification sent',
+      );
     } catch (error) {
-      this.logger.error(`Error generating weekly report: ${error.message}`, error.stack);
-      await this.notificationService.sendSystemAlert('Weekly report generation failed', error);
+      this.logger.error(
+        `Error generating weekly report: ${error.message}`,
+        error.stack,
+      );
+      await this.notificationService.sendSystemAlert(
+        'Weekly report generation failed',
+        error,
+      );
     }
   }
 
   /**
    * Register a dynamic job that can be added at runtime
    */
-  registerDynamicJob(name: string, cronExpression: string, callback: () => void): void {
+  registerDynamicJob(
+    name: string,
+    cronExpression: string,
+    callback: () => void,
+  ): void {
     try {
       const job = new CronJob(cronExpression, callback);
 
       this.schedulerRegistry.addCronJob(name, job);
       job.start();
 
-      this.logger.log(`Job ${name} registered with cron pattern: ${cronExpression}`);
+      this.logger.log(
+        `Job ${name} registered with cron pattern: ${cronExpression}`,
+      );
     } catch (error) {
-      this.logger.error(`Error registering dynamic job ${name}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error registering dynamic job ${name}: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
@@ -182,7 +221,10 @@ export class JobsService {
 
       return result.count;
     } catch (error) {
-      this.logger.error(`Error in cleanupExpiredTokens: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error in cleanupExpiredTokens: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -208,29 +250,29 @@ export class JobsService {
       // Count new users in the last week
       const newUsers = await this.prismaService.user.count({
         where: {
-          createdAt: { gte: oneWeekAgo }
-        }
+          createdAt: { gte: oneWeekAgo },
+        },
       });
 
       // Count new companies in the last week
       const newCompanies = await this.prismaService.company.count({
         where: {
-          createdAt: { gte: oneWeekAgo }
-        }
+          createdAt: { gte: oneWeekAgo },
+        },
       });
 
       // Count new merchants in the last week
       const newMerchants = await this.prismaService.merchant.count({
         where: {
-          createdAt: { gte: oneWeekAgo }
-        }
+          createdAt: { gte: oneWeekAgo },
+        },
       });
 
       // Count pending merchant approvals
       const pendingMerchants = await this.prismaService.merchant.count({
         where: {
-          status: 'PENDING'
-        }
+          status: 'PENDING',
+        },
       });
 
       return {
@@ -241,7 +283,10 @@ export class JobsService {
         pendingMerchants,
       };
     } catch (error) {
-      this.logger.error(`Error generating weekly business report: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error generating weekly business report: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

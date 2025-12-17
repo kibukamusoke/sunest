@@ -1,0 +1,10 @@
+{
+  "displayName": "Test User Updated",
+  "firstName": "Test",
+  "lastName": "User",
+  "phoneNumber": "+60-123-456-789",
+  "jobTitle": "Senior Procurement Manager",
+  "department": "Operations",
+  "idType": "NRIC",
+  "idValue": "123456-78-9012"
+}

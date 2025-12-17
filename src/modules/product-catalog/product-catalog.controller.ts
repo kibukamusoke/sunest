@@ -26,8 +26,16 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
-import { SystemAdmin, MerchantAdmin, MerchantUser } from '../../common/decorators/roles.decorator';
-import { RequireSystemManage, RequireProductManage } from '../../common/decorators/permissions.decorator';
+import {
+  SystemAdmin,
+  MerchantAdmin,
+  MerchantUser,
+} from '../../common/decorators/roles.decorator';
+import {
+  RequireSystemManage,
+  RequireProductManage,
+} from '../../common/decorators/permissions.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { ProductCatalogService } from './product-catalog.service';
 import {
   CreateCategoryDto,
@@ -55,7 +63,7 @@ import {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ProductCatalogController {
-  constructor(private readonly productCatalogService: ProductCatalogService) { }
+  constructor(private readonly productCatalogService: ProductCatalogService) {}
 
   // ==================== CATEGORY MANAGEMENT ====================
 
@@ -65,7 +73,8 @@ export class ProductCatalogController {
   @RequireSystemManage()
   @ApiOperation({
     summary: 'Create a new product category',
-    description: 'Create a new product category. Only system administrators can create categories.',
+    description:
+      'Create a new product category. Only system administrators can create categories.',
   })
   @ApiBody({ type: CreateCategoryDto })
   @ApiResponse({
@@ -85,10 +94,14 @@ export class ProductCatalogController {
     @Body() createCategoryDto: CreateCategoryDto,
     @Request() req: any,
   ): Promise<CategoryResponseDto> {
-    return this.productCatalogService.createCategory(createCategoryDto, req.user.userId);
+    return this.productCatalogService.createCategory(
+      createCategoryDto,
+      req.user.userId,
+    );
   }
 
   @Get('categories')
+  @Public()
   @ApiOperation({
     summary: 'Get category hierarchy',
     description: 'Retrieve all categories in a hierarchical structure.',
@@ -111,13 +124,19 @@ export class ProductCatalogController {
     type: CategoryHierarchyDto,
   })
   async getCategoryHierarchy(
-    @Query('includeProducts', new ParseBoolPipe({ optional: true })) includeProducts = false,
-    @Query('activeOnly', new ParseBoolPipe({ optional: true })) activeOnly = true,
+    @Query('includeProducts', new ParseBoolPipe({ optional: true }))
+    includeProducts = false,
+    @Query('activeOnly', new ParseBoolPipe({ optional: true }))
+    activeOnly = true,
   ): Promise<CategoryHierarchyDto> {
-    return this.productCatalogService.getCategoryHierarchy(includeProducts, activeOnly);
+    return this.productCatalogService.getCategoryHierarchy(
+      includeProducts,
+      activeOnly,
+    );
   }
 
   @Get('categories/:categoryId')
+  @Public()
   @ApiOperation({
     summary: 'Get category by ID',
     description: 'Retrieve a specific category by its ID.',
@@ -140,9 +159,13 @@ export class ProductCatalogController {
   })
   async getCategoryById(
     @Param('categoryId', ParseUUIDPipe) categoryId: string,
-    @Query('includeProducts', new ParseBoolPipe({ optional: true })) includeProducts = false,
+    @Query('includeProducts', new ParseBoolPipe({ optional: true }))
+    includeProducts = false,
   ): Promise<CategoryResponseDto> {
-    return this.productCatalogService.getCategoryById(categoryId, includeProducts);
+    return this.productCatalogService.getCategoryById(
+      categoryId,
+      includeProducts,
+    );
   }
 
   @Put('categories/:categoryId')
@@ -151,7 +174,8 @@ export class ProductCatalogController {
   @RequireSystemManage()
   @ApiOperation({
     summary: 'Update a category',
-    description: 'Update an existing category. Only system administrators can update categories.',
+    description:
+      'Update an existing category. Only system administrators can update categories.',
   })
   @ApiParam({ name: 'categoryId', description: 'Category ID' })
   @ApiBody({ type: UpdateCategoryDto })
@@ -173,7 +197,11 @@ export class ProductCatalogController {
     @Body() updateCategoryDto: UpdateCategoryDto,
     @Request() req: any,
   ): Promise<CategoryResponseDto> {
-    return this.productCatalogService.updateCategory(categoryId, updateCategoryDto, req.user.userId);
+    return this.productCatalogService.updateCategory(
+      categoryId,
+      updateCategoryDto,
+      req.user.userId,
+    );
   }
 
   @Delete('categories/:categoryId')
@@ -182,7 +210,8 @@ export class ProductCatalogController {
   @RequireSystemManage()
   @ApiOperation({
     summary: 'Delete a category',
-    description: 'Delete a category. Only system administrators can delete categories. Cannot delete categories with products or subcategories.',
+    description:
+      'Delete a category. Only system administrators can delete categories. Cannot delete categories with products or subcategories.',
   })
   @ApiParam({ name: 'categoryId', description: 'Category ID' })
   @ApiResponse({
@@ -195,9 +224,12 @@ export class ProductCatalogController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Cannot delete category with existing products or subcategories',
+    description:
+      'Cannot delete category with existing products or subcategories',
   })
-  async deleteCategory(@Param('categoryId', ParseUUIDPipe) categoryId: string): Promise<void> {
+  async deleteCategory(
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
+  ): Promise<void> {
     return this.productCatalogService.deleteCategory(categoryId);
   }
 
@@ -209,7 +241,8 @@ export class ProductCatalogController {
   @RequireProductManage()
   @ApiOperation({
     summary: 'Create a new product',
-    description: 'Create a new product. Only merchant administrators can create products.',
+    description:
+      'Create a new product. Only merchant administrators can create products.',
   })
   @ApiBody({ type: CreateProductDto })
   @ApiResponse({
@@ -230,18 +263,24 @@ export class ProductCatalogController {
     @Request() req: any,
   ): Promise<ProductResponseDto> {
     // Get merchant ID from user context
-    const merchantId = req.user.merchants?.[0]?.id;
+    const merchantId = req.user?.merchants?.[0]?.id;
     if (!merchantId) {
       throw new Error('User is not associated with any merchant');
     }
 
-    return this.productCatalogService.createProduct(createProductDto, merchantId, req.user.userId);
+    return this.productCatalogService.createProduct(
+      createProductDto,
+      merchantId,
+      req.user.userId,
+    );
   }
 
   @Get()
+  @Public()
   @ApiOperation({
-    summary: 'Get products with filtering and search',
-    description: 'Retrieve products with various filtering options.',
+    summary: 'Get products with filtering and search (Public)',
+    description:
+      'Retrieve products with various filtering options. Public endpoint - only shows published products.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -250,10 +289,33 @@ export class ProductCatalogController {
   })
   async getProducts(
     @Query(new ValidationPipe({ transform: true })) searchDto: ProductSearchDto,
+  ): Promise<ProductListDto> {
+    // For public access, show all products (no merchant filtering)
+    return this.productCatalogService.getProducts(searchDto, undefined);
+  }
+
+  @Get('my-products')
+  @UseGuards(RolesGuard, PermissionsGuard)
+  @MerchantAdmin()
+  @RequireProductManage()
+  @ApiOperation({
+    summary: 'Get merchant products',
+    description: 'Retrieve products for the authenticated merchant only.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Merchant products retrieved successfully',
+    type: ProductListDto,
+  })
+  async getMerchantProducts(
+    @Query(new ValidationPipe({ transform: true })) searchDto: ProductSearchDto,
     @Request() req: any,
   ): Promise<ProductListDto> {
-    // If user is a merchant, filter by their merchant ID
-    const merchantId = req.user.roles?.includes('system_admin') ? undefined : req.user.merchants?.[0]?.id;
+    // Get merchant ID from user context
+    const merchantId = req.user?.merchants?.[0]?.id;
+    if (!merchantId) {
+      throw new Error('User is not associated with any merchant');
+    }
 
     return this.productCatalogService.getProducts(searchDto, merchantId);
   }
@@ -265,24 +327,68 @@ export class ProductCatalogController {
     summary: 'Get product attribute templates',
     description: 'Retrieve attribute templates with optional filtering.',
   })
-  @ApiQuery({ name: 'categoryId', required: false, description: 'Category ID to filter attributes', type: String })
-  @ApiQuery({ name: 'type', required: false, description: 'Attribute type filter', enum: ['TEXT', 'NUMBER', 'BOOLEAN', 'SELECT', 'MULTI_SELECT', 'DATE', 'URL', 'EMAIL'] })
-  @ApiQuery({ name: 'requiredOnly', required: false, description: 'Filter by required attributes only', type: Boolean })
-  @ApiQuery({ name: 'filterableOnly', required: false, description: 'Filter by filterable attributes only', type: Boolean })
-  @ApiQuery({ name: 'variantOnly', required: false, description: 'Filter by variant attributes only', type: Boolean })
-  @ApiQuery({ name: 'activeOnly', required: false, description: 'Filter by active attributes only', type: Boolean })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    description: 'Category ID to filter attributes',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    description: 'Attribute type filter',
+    enum: [
+      'TEXT',
+      'NUMBER',
+      'BOOLEAN',
+      'SELECT',
+      'MULTI_SELECT',
+      'DATE',
+      'URL',
+      'EMAIL',
+    ],
+  })
+  @ApiQuery({
+    name: 'requiredOnly',
+    required: false,
+    description: 'Filter by required attributes only',
+    type: Boolean,
+  })
+  @ApiQuery({
+    name: 'filterableOnly',
+    required: false,
+    description: 'Filter by filterable attributes only',
+    type: Boolean,
+  })
+  @ApiQuery({
+    name: 'variantOnly',
+    required: false,
+    description: 'Filter by variant attributes only',
+    type: Boolean,
+  })
+  @ApiQuery({
+    name: 'activeOnly',
+    required: false,
+    description: 'Filter by active attributes only',
+    type: Boolean,
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Attribute templates retrieved successfully',
     type: ProductAttributeTemplateListDto,
   })
   async getAttributeTemplates(
-    @Query('categoryId', new ParseUUIDPipe({ optional: true })) categoryId?: string,
+    @Query('categoryId', new ParseUUIDPipe({ optional: true }))
+    categoryId?: string,
     @Query('type') type?: string,
-    @Query('requiredOnly', new ParseBoolPipe({ optional: true })) requiredOnly?: boolean,
-    @Query('filterableOnly', new ParseBoolPipe({ optional: true })) filterableOnly?: boolean,
-    @Query('variantOnly', new ParseBoolPipe({ optional: true })) variantOnly?: boolean,
-    @Query('activeOnly', new ParseBoolPipe({ optional: true })) activeOnly?: boolean,
+    @Query('requiredOnly', new ParseBoolPipe({ optional: true }))
+    requiredOnly?: boolean,
+    @Query('filterableOnly', new ParseBoolPipe({ optional: true }))
+    filterableOnly?: boolean,
+    @Query('variantOnly', new ParseBoolPipe({ optional: true }))
+    variantOnly?: boolean,
+    @Query('activeOnly', new ParseBoolPipe({ optional: true }))
+    activeOnly?: boolean,
   ): Promise<ProductAttributeTemplateListDto> {
     const filter: AttributeFilterDto = {
       categoryId,
@@ -296,9 +402,11 @@ export class ProductCatalogController {
   }
 
   @Get(':productId')
+  @Public()
   @ApiOperation({
-    summary: 'Get product by ID',
-    description: 'Retrieve a specific product by its ID.',
+    summary: 'Get product by ID (Public)',
+    description:
+      'Retrieve a specific product by its ID. Public endpoint - only shows published products.',
   })
   @ApiParam({ name: 'productId', description: 'Product ID' })
   @ApiQuery({
@@ -318,9 +426,59 @@ export class ProductCatalogController {
   })
   async getProductById(
     @Param('productId', ParseUUIDPipe) productId: string,
-    @Query('includeVariants', new ParseBoolPipe({ optional: true })) includeVariants = true,
+    @Query('includeVariants', new ParseBoolPipe({ optional: true }))
+    includeVariants = true,
   ): Promise<ProductResponseDto> {
-    return this.productCatalogService.getProductById(productId, includeVariants);
+    return this.productCatalogService.getProductById(
+      productId,
+      includeVariants,
+      true,
+    );
+  }
+
+  @Get('my-products/:productId')
+  @UseGuards(RolesGuard, PermissionsGuard)
+  @MerchantAdmin()
+  @RequireProductManage()
+  @ApiOperation({
+    summary: 'Get merchant product by ID',
+    description:
+      'Retrieve a specific product by its ID for the authenticated merchant only.',
+  })
+  @ApiParam({ name: 'productId', description: 'Product ID' })
+  @ApiQuery({
+    name: 'includeVariants',
+    required: false,
+    type: Boolean,
+    description: 'Include product variants',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Product retrieved successfully',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Product not found',
+  })
+  async getMerchantProductById(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Query('includeVariants', new ParseBoolPipe({ optional: true }))
+    includeVariants = true,
+    @Request() req: any,
+  ): Promise<ProductResponseDto> {
+    // Get merchant ID from user context
+    const merchantId = req.user?.merchants?.[0]?.id;
+    if (!merchantId) {
+      throw new Error('User is not associated with any merchant');
+    }
+
+    return this.productCatalogService.getProductById(
+      productId,
+      includeVariants,
+      false,
+      merchantId,
+    );
   }
 
   @Put(':productId')
@@ -329,7 +487,8 @@ export class ProductCatalogController {
   @RequireProductManage()
   @ApiOperation({
     summary: 'Update a product',
-    description: 'Update an existing product. Only merchant administrators can update products.',
+    description:
+      'Update an existing product. Only merchant administrators can update products.',
   })
   @ApiParam({ name: 'productId', description: 'Product ID' })
   @ApiBody({ type: UpdateProductDto })
@@ -351,7 +510,18 @@ export class ProductCatalogController {
     @Body() updateProductDto: UpdateProductDto,
     @Request() req: any,
   ): Promise<ProductResponseDto> {
-    return this.productCatalogService.updateProduct(productId, updateProductDto, req.user.userId);
+    // Get merchant ID from user context
+    const merchantId = req.user?.merchants?.[0]?.id;
+    if (!merchantId) {
+      throw new Error('User is not associated with any merchant');
+    }
+
+    return this.productCatalogService.updateProduct(
+      productId,
+      updateProductDto,
+      req.user.userId,
+      merchantId,
+    );
   }
 
   @Delete(':productId')
@@ -360,7 +530,8 @@ export class ProductCatalogController {
   @RequireProductManage()
   @ApiOperation({
     summary: 'Delete a product',
-    description: 'Delete a product. Only merchant administrators can delete products.',
+    description:
+      'Delete a product. Only merchant administrators can delete products.',
   })
   @ApiParam({ name: 'productId', description: 'Product ID' })
   @ApiResponse({
@@ -371,8 +542,17 @@ export class ProductCatalogController {
     status: HttpStatus.NOT_FOUND,
     description: 'Product not found',
   })
-  async deleteProduct(@Param('productId', ParseUUIDPipe) productId: string): Promise<void> {
-    return this.productCatalogService.deleteProduct(productId);
+  async deleteProduct(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Request() req: any,
+  ): Promise<void> {
+    // Get merchant ID from user context
+    const merchantId = req.user?.merchants?.[0]?.id;
+    if (!merchantId) {
+      throw new Error('User is not associated with any merchant');
+    }
+
+    return this.productCatalogService.deleteProduct(productId, merchantId);
   }
 
   @Post(':productId/submit-for-approval')
@@ -401,7 +581,10 @@ export class ProductCatalogController {
     @Param('productId', ParseUUIDPipe) productId: string,
     @Request() req: any,
   ): Promise<ProductResponseDto> {
-    return this.productCatalogService.submitProductForApproval(productId, req.user.userId);
+    return this.productCatalogService.submitProductForApproval(
+      productId,
+      req.user.userId,
+    );
   }
 
   @Post(':productId/approve')
@@ -410,7 +593,8 @@ export class ProductCatalogController {
   @RequireSystemManage()
   @ApiOperation({
     summary: 'Approve a product',
-    description: 'Approve a product that is pending review. Only system administrators can approve products.',
+    description:
+      'Approve a product that is pending review. Only system administrators can approve products.',
   })
   @ApiParam({ name: 'productId', description: 'Product ID' })
   @ApiResponse({
@@ -430,7 +614,10 @@ export class ProductCatalogController {
     @Param('productId', ParseUUIDPipe) productId: string,
     @Request() req: any,
   ): Promise<ProductResponseDto> {
-    return this.productCatalogService.approveProduct(productId, req.user.userId);
+    return this.productCatalogService.approveProduct(
+      productId,
+      req.user.userId,
+    );
   }
 
   @Post(':productId/reject')
@@ -439,7 +626,8 @@ export class ProductCatalogController {
   @RequireSystemManage()
   @ApiOperation({
     summary: 'Reject a product',
-    description: 'Reject a product that is pending review. Only system administrators can reject products.',
+    description:
+      'Reject a product that is pending review. Only system administrators can reject products.',
   })
   @ApiParam({ name: 'productId', description: 'Product ID' })
   @ApiBody({
@@ -473,7 +661,11 @@ export class ProductCatalogController {
     @Body() body: { reason: string },
     @Request() req: any,
   ): Promise<ProductResponseDto> {
-    return this.productCatalogService.rejectProduct(productId, body.reason, req.user.userId);
+    return this.productCatalogService.rejectProduct(
+      productId,
+      body.reason,
+      req.user.userId,
+    );
   }
 
   // ==================== PRODUCT VARIANT MANAGEMENT ====================
@@ -504,11 +696,23 @@ export class ProductCatalogController {
   async createProductVariant(
     @Param('productId', ParseUUIDPipe) productId: string,
     @Body() createVariantDto: CreateProductVariantDto,
+    @Request() req: any,
   ): Promise<ProductVariantResponseDto> {
-    return this.productCatalogService.createProductVariant(productId, createVariantDto);
+    // Get merchant ID from user context
+    const merchantId = req.user?.merchants?.[0]?.id;
+    if (!merchantId) {
+      throw new Error('User is not associated with any merchant');
+    }
+
+    return this.productCatalogService.createProductVariant(
+      productId,
+      createVariantDto,
+      merchantId,
+    );
   }
 
   @Get(':productId/variants')
+  @Public()
   @ApiOperation({
     summary: 'Get product variants',
     description: 'Retrieve all variants for a specific product.',
@@ -552,7 +756,10 @@ export class ProductCatalogController {
     @Param('variantId', ParseUUIDPipe) variantId: string,
     @Body() updateVariantDto: UpdateProductVariantDto,
   ): Promise<ProductVariantResponseDto> {
-    return this.productCatalogService.updateProductVariant(variantId, updateVariantDto);
+    return this.productCatalogService.updateProductVariant(
+      variantId,
+      updateVariantDto,
+    );
   }
 
   @Delete('variants/:variantId')
@@ -572,7 +779,9 @@ export class ProductCatalogController {
     status: HttpStatus.NOT_FOUND,
     description: 'Product variant not found',
   })
-  async deleteProductVariant(@Param('variantId', ParseUUIDPipe) variantId: string): Promise<void> {
+  async deleteProductVariant(
+    @Param('variantId', ParseUUIDPipe) variantId: string,
+  ): Promise<void> {
     return this.productCatalogService.deleteProductVariant(variantId);
   }
 
@@ -582,7 +791,8 @@ export class ProductCatalogController {
   @RequireSystemManage()
   @ApiOperation({
     summary: 'Create a product attribute template',
-    description: 'Create a new attribute template for a category. Only system administrators can create attribute templates.',
+    description:
+      'Create a new attribute template for a category. Only system administrators can create attribute templates.',
   })
   @ApiParam({ name: 'categoryId', description: 'Category ID' })
   @ApiBody({ type: CreateProductAttributeTemplateDto })
@@ -606,10 +816,11 @@ export class ProductCatalogController {
   ): Promise<ProductAttributeTemplateResponseDto> {
     // Override categoryId from URL param
     createAttributeDto.categoryId = categoryId;
-    return this.productCatalogService.createAttributeTemplate(createAttributeDto, req.user.userId);
+    return this.productCatalogService.createAttributeTemplate(
+      createAttributeDto,
+      req.user.userId,
+    );
   }
-
-
 
   @Put('attributes/:attributeId')
   @UseGuards(RolesGuard, PermissionsGuard)
@@ -617,7 +828,8 @@ export class ProductCatalogController {
   @RequireSystemManage()
   @ApiOperation({
     summary: 'Update a product attribute template',
-    description: 'Update an existing attribute template. Only system administrators can update attribute templates.',
+    description:
+      'Update an existing attribute template. Only system administrators can update attribute templates.',
   })
   @ApiParam({ name: 'attributeId', description: 'Attribute template ID' })
   @ApiBody({ type: UpdateProductAttributeTemplateDto })
@@ -634,7 +846,10 @@ export class ProductCatalogController {
     @Param('attributeId', ParseUUIDPipe) attributeId: string,
     @Body() updateAttributeDto: UpdateProductAttributeTemplateDto,
   ): Promise<ProductAttributeTemplateResponseDto> {
-    return this.productCatalogService.updateAttributeTemplate(attributeId, updateAttributeDto);
+    return this.productCatalogService.updateAttributeTemplate(
+      attributeId,
+      updateAttributeDto,
+    );
   }
 
   @Delete('attributes/:attributeId')
@@ -643,7 +858,8 @@ export class ProductCatalogController {
   @RequireSystemManage()
   @ApiOperation({
     summary: 'Delete a product attribute template',
-    description: 'Delete an attribute template. Only system administrators can delete attribute templates.',
+    description:
+      'Delete an attribute template. Only system administrators can delete attribute templates.',
   })
   @ApiParam({ name: 'attributeId', description: 'Attribute template ID' })
   @ApiResponse({
@@ -654,7 +870,9 @@ export class ProductCatalogController {
     status: HttpStatus.NOT_FOUND,
     description: 'Attribute template not found',
   })
-  async deleteAttributeTemplate(@Param('attributeId', ParseUUIDPipe) attributeId: string): Promise<void> {
+  async deleteAttributeTemplate(
+    @Param('attributeId', ParseUUIDPipe) attributeId: string,
+  ): Promise<void> {
     return this.productCatalogService.deleteAttributeTemplate(attributeId);
   }
 }

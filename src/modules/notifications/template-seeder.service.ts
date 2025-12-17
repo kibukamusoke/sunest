@@ -4,20 +4,20 @@ import { EmailTemplateType, NotificationCategory } from '@prisma/client';
 
 @Injectable()
 export class TemplateSeederService {
-    private readonly logger = new Logger(TemplateSeederService.name);
+  private readonly logger = new Logger(TemplateSeederService.name);
 
-    constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-    async seedDefaultTemplates(): Promise<void> {
-        try {
-            const templates = [
-                // User Authentication Templates
-                {
-                    name: 'welcome-email',
-                    type: EmailTemplateType.WELCOME,
-                    category: NotificationCategory.USER,
-                    subject: 'Welcome to Hardware World! 🎉',
-                    bodyText: `Hi {{name}},
+  async seedDefaultTemplates(): Promise<void> {
+    try {
+      const templates = [
+        // User Authentication Templates
+        {
+          name: 'welcome-email',
+          type: EmailTemplateType.WELCOME,
+          category: NotificationCategory.USER,
+          subject: 'Welcome to Hardware World! 🎉',
+          bodyText: `Hi {{name}},
 
 Welcome to Hardware World! We're excited to have you join our B2B procurement platform.
 
@@ -31,7 +31,7 @@ If you have any questions, our support team is here to help.
 
 Best regards,
 The Hardware World Team`,
-                    bodyHtml: `
+          bodyHtml: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #2563eb;">Welcome to Hardware World! 🎉</h1>
   <p>Hi {{name}},</p>
@@ -49,14 +49,14 @@ The Hardware World Team`,
   <p>If you have any questions, our support team is here to help.</p>
   <p>Best regards,<br>The Hardware World Team</p>
 </div>`,
-                    variables: { name: 'User name', loginUrl: 'Login URL' },
-                },
-                {
-                    name: 'email-verification',
-                    type: EmailTemplateType.VERIFICATION,
-                    category: NotificationCategory.USER,
-                    subject: 'Verify your Hardware World email address',
-                    bodyText: `Hi {{name}},
+          variables: { name: 'User name', loginUrl: 'Login URL' },
+        },
+        {
+          name: 'email-verification',
+          type: EmailTemplateType.VERIFICATION,
+          category: NotificationCategory.USER,
+          subject: 'Verify your Hardware World email address',
+          bodyText: `Hi {{name}},
 
 Please verify your email address by clicking the link below:
 
@@ -66,7 +66,7 @@ This link will expire in 24 hours. If you didn't create an account with Hardware
 
 Best regards,
 Hardware World Team`,
-                    bodyHtml: `
+          bodyHtml: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #2563eb;">Verify Your Email Address</h1>
   <p>Hi {{name}},</p>
@@ -77,15 +77,15 @@ Hardware World Team`,
   <p>This link will expire in 24 hours. If you didn't create an account with Hardware World, please ignore this email.</p>
   <p>Best regards,<br>Hardware World Team</p>
 </div>`,
-                    variables: { name: 'User name', verificationUrl: 'Verification URL' },
-                },
-                // Order Templates
-                {
-                    name: 'order-confirmation',
-                    type: EmailTemplateType.ORDER_CONFIRMATION,
-                    category: NotificationCategory.ORDER,
-                    subject: 'Order Confirmed - #{{orderNumber}}',
-                    bodyText: `Hi {{name}},
+          variables: { name: 'User name', verificationUrl: 'Verification URL' },
+        },
+        // Order Templates
+        {
+          name: 'order-confirmation',
+          type: EmailTemplateType.ORDER_CONFIRMATION,
+          category: NotificationCategory.ORDER,
+          subject: 'Order Confirmed - #{{orderNumber}}',
+          bodyText: `Hi {{name}},
 
 Your order has been confirmed! Here are the details:
 
@@ -108,7 +108,7 @@ View Order: {{orderUrl}}
 Thank you for your business!
 
 Hardware World Team`,
-                    bodyHtml: `
+          bodyHtml: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #2563eb;">Order Confirmed! ✅</h1>
   <p>Hi {{name}},</p>
@@ -142,14 +142,22 @@ Hardware World Team`,
   <p>Thank you for your business!</p>
   <p>Hardware World Team</p>
 </div>`,
-                    variables: { name: 'Customer name', orderNumber: 'Order number', orderDate: 'Order date', totalAmount: 'Total amount', items: 'Order items', shippingAddress: 'Shipping address', orderUrl: 'Order view URL' },
-                },
-                {
-                    name: 'order-shipped',
-                    type: EmailTemplateType.ORDER_SHIPPED,
-                    category: NotificationCategory.ORDER,
-                    subject: 'Your order #{{orderNumber}} has shipped! 📦',
-                    bodyText: `Hi {{name}},
+          variables: {
+            name: 'Customer name',
+            orderNumber: 'Order number',
+            orderDate: 'Order date',
+            totalAmount: 'Total amount',
+            items: 'Order items',
+            shippingAddress: 'Shipping address',
+            orderUrl: 'Order view URL',
+          },
+        },
+        {
+          name: 'order-shipped',
+          type: EmailTemplateType.ORDER_SHIPPED,
+          category: NotificationCategory.ORDER,
+          subject: 'Your order #{{orderNumber}} has shipped! 📦',
+          bodyText: `Hi {{name}},
 
 Great news! Your order #{{orderNumber}} has shipped.
 
@@ -164,7 +172,7 @@ If you have any questions about your shipment, please contact us.
 
 Best regards,
 Hardware World Team`,
-                    bodyHtml: `
+          bodyHtml: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #2563eb;">Your Order Has Shipped! 📦</h1>
   <p>Hi {{name}},</p>
@@ -184,15 +192,22 @@ Hardware World Team`,
   <p>If you have any questions about your shipment, please contact us.</p>
   <p>Best regards,<br>Hardware World Team</p>
 </div>`,
-                    variables: { name: 'Customer name', orderNumber: 'Order number', carrier: 'Shipping carrier', trackingNumber: 'Tracking number', expectedDelivery: 'Expected delivery date', trackingUrl: 'Tracking URL' },
-                },
-                // Merchant Templates
-                {
-                    name: 'merchant-approved',
-                    type: EmailTemplateType.MERCHANT_APPROVED,
-                    category: NotificationCategory.MERCHANT,
-                    subject: 'Welcome to Hardware World Merchant Network! 🎉',
-                    bodyText: `Hi {{name}},
+          variables: {
+            name: 'Customer name',
+            orderNumber: 'Order number',
+            carrier: 'Shipping carrier',
+            trackingNumber: 'Tracking number',
+            expectedDelivery: 'Expected delivery date',
+            trackingUrl: 'Tracking URL',
+          },
+        },
+        // Merchant Templates
+        {
+          name: 'merchant-approved',
+          type: EmailTemplateType.MERCHANT_APPROVED,
+          category: NotificationCategory.MERCHANT,
+          subject: 'Welcome to Hardware World Merchant Network! 🎉',
+          bodyText: `Hi {{name}},
 
 Congratulations! Your merchant application has been approved.
 
@@ -213,7 +228,7 @@ Welcome to the Hardware World family!
 
 Best regards,
 Hardware World Merchant Team`,
-                    bodyHtml: `
+          bodyHtml: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #2563eb;">Welcome to Hardware World! 🎉</h1>
   <p>Hi {{name}},</p>
@@ -240,15 +255,20 @@ Hardware World Merchant Team`,
   <p>Welcome to the Hardware World family!</p>
   <p>Best regards,<br>Hardware World Merchant Team</p>
 </div>`,
-                    variables: { name: 'Merchant name', companyName: 'Company name', merchantId: 'Merchant ID', merchantPortalUrl: 'Merchant portal URL' },
-                },
-                // Inventory Alerts
-                {
-                    name: 'low-stock-alert',
-                    type: EmailTemplateType.LOW_STOCK_ALERT,
-                    category: NotificationCategory.INVENTORY,
-                    subject: 'Low Stock Alert - {{productName}}',
-                    bodyText: `Hi {{name}},
+          variables: {
+            name: 'Merchant name',
+            companyName: 'Company name',
+            merchantId: 'Merchant ID',
+            merchantPortalUrl: 'Merchant portal URL',
+          },
+        },
+        // Inventory Alerts
+        {
+          name: 'low-stock-alert',
+          type: EmailTemplateType.LOW_STOCK_ALERT,
+          category: NotificationCategory.INVENTORY,
+          subject: 'Low Stock Alert - {{productName}}',
+          bodyText: `Hi {{name}},
 
 Low stock alert for one of your products:
 
@@ -264,7 +284,7 @@ Manage Inventory: {{inventoryUrl}}
 
 Best regards,
 Hardware World System`,
-                    bodyHtml: `
+          bodyHtml: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #dc2626;">Low Stock Alert ⚠️</h1>
   <p>Hi {{name}},</p>
@@ -286,15 +306,23 @@ Hardware World System`,
 
   <p>Best regards,<br>Hardware World System</p>
 </div>`,
-                    variables: { name: 'Merchant name', productName: 'Product name', sku: 'Product SKU', currentStock: 'Current stock level', minThreshold: 'Minimum threshold', warehouse: 'Warehouse name', inventoryUrl: 'Inventory management URL' },
-                },
-                // RFQ Templates
-                {
-                    name: 'rfq-submitted',
-                    type: EmailTemplateType.RFQ_SUBMITTED,
-                    category: NotificationCategory.SYSTEM,
-                    subject: 'New RFQ Received - {{rfqNumber}}',
-                    bodyText: `Hi {{name}},
+          variables: {
+            name: 'Merchant name',
+            productName: 'Product name',
+            sku: 'Product SKU',
+            currentStock: 'Current stock level',
+            minThreshold: 'Minimum threshold',
+            warehouse: 'Warehouse name',
+            inventoryUrl: 'Inventory management URL',
+          },
+        },
+        // RFQ Templates
+        {
+          name: 'rfq-submitted',
+          type: EmailTemplateType.RFQ_SUBMITTED,
+          category: NotificationCategory.SYSTEM,
+          subject: 'New RFQ Received - {{rfqNumber}}',
+          bodyText: `Hi {{name}},
 
 You have received a new Request for Quote:
 
@@ -314,7 +342,7 @@ Review RFQ: {{rfqUrl}}
 
 Best regards,
 Hardware World System`,
-                    bodyHtml: `
+          bodyHtml: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #2563eb;">New RFQ Received 📋</h1>
   <p>Hi {{name}},</p>
@@ -342,28 +370,41 @@ Hardware World System`,
 
   <p>Best regards,<br>Hardware World System</p>
 </div>`,
-                    variables: { name: 'Merchant name', rfqNumber: 'RFQ number', buyerName: 'Buyer name', buyerCompany: 'Buyer company', requestedDelivery: 'Requested delivery date', itemCount: 'Number of items', items: 'RFQ items', responseTime: 'Response time limit', rfqUrl: 'RFQ review URL' },
-                },
-            ];
+          variables: {
+            name: 'Merchant name',
+            rfqNumber: 'RFQ number',
+            buyerName: 'Buyer name',
+            buyerCompany: 'Buyer company',
+            requestedDelivery: 'Requested delivery date',
+            itemCount: 'Number of items',
+            items: 'RFQ items',
+            responseTime: 'Response time limit',
+            rfqUrl: 'RFQ review URL',
+          },
+        },
+      ];
 
-            for (const template of templates) {
-                await this.prisma.notificationTemplate.upsert({
-                    where: { name: template.name },
-                    create: template,
-                    update: {
-                        subject: template.subject,
-                        bodyText: template.bodyText,
-                        bodyHtml: template.bodyHtml,
-                        variables: template.variables,
-                        version: { increment: 1 },
-                    },
-                });
-            }
+      for (const template of templates) {
+        await this.prisma.notificationTemplate.upsert({
+          where: { name: template.name },
+          create: template,
+          update: {
+            subject: template.subject,
+            bodyText: template.bodyText,
+            bodyHtml: template.bodyHtml,
+            variables: template.variables,
+            version: { increment: 1 },
+          },
+        });
+      }
 
-            this.logger.log(`Seeded ${templates.length} notification templates`);
-        } catch (error) {
-            this.logger.error(`Failed to seed templates: ${error.message}`, error.stack);
-            throw error;
-        }
+      this.logger.log(`Seeded ${templates.length} notification templates`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to seed templates: ${error.message}`,
+        error.stack,
+      );
+      throw error;
     }
+  }
 }

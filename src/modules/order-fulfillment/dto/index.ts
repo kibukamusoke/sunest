@@ -1,7 +1,7 @@
 // Order DTOs
 export * from './order.dto';
 
-// Fulfillment DTOs  
+// Fulfillment DTOs
 export * from './fulfillment.dto';
 
 // Shipping DTOs

@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsString, IsEmail, IsOptional, IsEnum, IsUrl, IsBoolean, IsDateString, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsEnum,
+  IsUrl,
+  IsBoolean,
+  IsDateString,
+  IsArray,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class MerchantProfileDto {
@@ -20,12 +29,6 @@ export class MerchantProfileDto {
 
   @ApiProperty({ description: 'Business type' })
   businessType?: string;
-
-  @ApiPropertyOptional({ description: 'Tax ID' })
-  taxId?: string;
-
-  @ApiPropertyOptional({ description: 'Registration number' })
-  registrationNumber?: string;
 
   @ApiPropertyOptional({ description: 'Contact email' })
   contactEmail?: string;
@@ -54,16 +57,29 @@ export class MerchantProfileDto {
   };
 
   // Malaysia E-Invoicing fields
-  @ApiPropertyOptional({ description: 'Tax Identification Number for e-invoicing', example: 'TIN123456789' })
+  @ApiPropertyOptional({
+    description: 'Tax Identification Number for e-invoicing',
+    example: 'TIN123456789',
+  })
   tin?: string;
 
-  @ApiPropertyOptional({ description: 'Type of identification document', enum: ['NRIC', 'BRN', 'PASSPORT', 'ARMY'], example: 'BRN' })
+  @ApiPropertyOptional({
+    description: 'Type of identification document',
+    enum: ['NRIC', 'BRN', 'PASSPORT', 'ARMY'],
+    example: 'BRN',
+  })
   idType?: string;
 
-  @ApiPropertyOptional({ description: 'Identification document number', example: '201501012345' })
+  @ApiPropertyOptional({
+    description: 'Identification document number',
+    example: '201501012345',
+  })
   idValue?: string;
 
-  @ApiProperty({ description: 'E-invoice submission opt-in status', default: false })
+  @ApiProperty({
+    description: 'E-invoice submission opt-in status',
+    default: false,
+  })
   eInvoiceOptIn: boolean;
 
   @ApiProperty({ description: 'Account status' })
@@ -176,22 +192,35 @@ export class UpdateMerchantProfileDto {
   returnPolicy?: string;
 
   // Malaysia E-Invoicing fields
-  @ApiPropertyOptional({ description: 'Tax Identification Number for e-invoicing', example: 'TIN123456789' })
+  @ApiPropertyOptional({
+    description: 'Tax Identification Number for e-invoicing',
+    example: 'TIN123456789',
+  })
   @IsOptional()
   @IsString()
   tin?: string;
 
-  @ApiPropertyOptional({ description: 'Type of identification document', enum: ['NRIC', 'BRN', 'PASSPORT', 'ARMY'], example: 'BRN' })
+  @ApiPropertyOptional({
+    description: 'Type of identification document',
+    enum: ['NRIC', 'BRN', 'PASSPORT', 'ARMY'],
+    example: 'BRN',
+  })
   @IsOptional()
   @IsEnum(['NRIC', 'BRN', 'PASSPORT', 'ARMY'])
   idType?: 'NRIC' | 'BRN' | 'PASSPORT' | 'ARMY';
 
-  @ApiPropertyOptional({ description: 'Identification document number', example: '201501012345' })
+  @ApiPropertyOptional({
+    description: 'Identification document number',
+    example: '201501012345',
+  })
   @IsOptional()
   @IsString()
   idValue?: string;
 
-  @ApiPropertyOptional({ description: 'E-invoice submission opt-in status', default: false })
+  @ApiPropertyOptional({
+    description: 'E-invoice submission opt-in status',
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   eInvoiceOptIn?: boolean;

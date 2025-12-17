@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 import { NotificationService } from '../notifications/notification.service';
 import { NotificationType } from '../notifications/dto/notification.dto';
@@ -29,11 +34,14 @@ export class ProductCatalogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
-  ) { }
+  ) {}
 
   // ==================== CATEGORY MANAGEMENT ====================
 
-  async createCategory(createCategoryDto: CreateCategoryDto, userId: string): Promise<CategoryResponseDto> {
+  async createCategory(
+    createCategoryDto: CreateCategoryDto,
+    userId: string,
+  ): Promise<CategoryResponseDto> {
     // Check if category name already exists
     const existingCategory = await this.prisma.category.findFirst({
       where: { name: createCategoryDto.name },
@@ -74,7 +82,10 @@ export class ProductCatalogService {
     return this.mapToCategoryResponse(category);
   }
 
-  async getCategoryHierarchy(includeProducts = false, activeOnly = true): Promise<CategoryHierarchyDto> {
+  async getCategoryHierarchy(
+    includeProducts = false,
+    activeOnly = true,
+  ): Promise<CategoryHierarchyDto> {
     const whereClause: Prisma.CategoryWhereInput = {
       parentId: null, // Get root categories
     };
@@ -93,7 +104,9 @@ export class ProductCatalogService {
               where: activeOnly ? { isActive: true } : {},
               include: {
                 children: true, // Support up to 4 levels deep
-                _count: includeProducts ? { select: { products: true } } : false,
+                _count: includeProducts
+                  ? { select: { products: true } }
+                  : false,
               },
               orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
             },
@@ -112,13 +125,18 @@ export class ProductCatalogService {
     });
 
     return {
-      categories: categories.map(category => this.mapToCategoryResponse(category, includeProducts)),
+      categories: categories.map((category) =>
+        this.mapToCategoryResponse(category, includeProducts),
+      ),
       totalCount,
       activeCount,
     };
   }
 
-  async getCategoryById(categoryId: string, includeProducts = false): Promise<CategoryResponseDto> {
+  async getCategoryById(
+    categoryId: string,
+    includeProducts = false,
+  ): Promise<CategoryResponseDto> {
     const category = await this.prisma.category.findUnique({
       where: { id: categoryId },
       include: {
@@ -136,7 +154,11 @@ export class ProductCatalogService {
     return this.mapToCategoryResponse(category, includeProducts);
   }
 
-  async updateCategory(categoryId: string, updateCategoryDto: UpdateCategoryDto, userId: string): Promise<CategoryResponseDto> {
+  async updateCategory(
+    categoryId: string,
+    updateCategoryDto: UpdateCategoryDto,
+    userId: string,
+  ): Promise<CategoryResponseDto> {
     const existingCategory = await this.prisma.category.findUnique({
       where: { id: categoryId },
     });
@@ -146,7 +168,10 @@ export class ProductCatalogService {
     }
 
     // Check slug uniqueness if provided
-    if (updateCategoryDto.slug && updateCategoryDto.slug !== existingCategory.slug) {
+    if (
+      updateCategoryDto.slug &&
+      updateCategoryDto.slug !== existingCategory.slug
+    ) {
       const existingSlug = await this.prisma.category.findFirst({
         where: {
           slug: updateCategoryDto.slug,
@@ -200,11 +225,15 @@ export class ProductCatalogService {
     }
 
     if (category.products.length > 0) {
-      throw new BadRequestException('Cannot delete category with existing products');
+      throw new BadRequestException(
+        'Cannot delete category with existing products',
+      );
     }
 
     if (category.children.length > 0) {
-      throw new BadRequestException('Cannot delete category with subcategories');
+      throw new BadRequestException(
+        'Cannot delete category with subcategories',
+      );
     }
 
     await this.prisma.category.delete({
@@ -214,29 +243,39 @@ export class ProductCatalogService {
 
   // ==================== PRODUCT MANAGEMENT ====================
 
-  async createProduct(createProductDto: CreateProductDto, merchantId: string, userId: string): Promise<ProductResponseDto> {
-    // Check if SKU already exists for this merchant
+  async createProduct(
+    createProductDto: CreateProductDto,
+    merchantId: string,
+    userId: string,
+  ): Promise<ProductResponseDto> {
+    // Check if SKU already exists for this merchant (excluding deleted products)
     const existingProduct = await this.prisma.product.findFirst({
       where: {
         merchantId,
         sku: createProductDto.sku,
+        status: { not: ProductStatus.DELETED },
       },
     });
 
     if (existingProduct) {
-      throw new ConflictException('Product with this SKU already exists for this merchant');
+      throw new ConflictException(
+        'Product with this SKU already exists for this merchant',
+      );
     }
 
-    // Check if slug already exists for this merchant
+    // Check if slug already exists for this merchant (excluding deleted products)
     const existingSlug = await this.prisma.product.findFirst({
       where: {
         merchantId,
         slug: createProductDto.slug,
+        status: { not: ProductStatus.DELETED },
       },
     });
 
     if (existingSlug) {
-      throw new ConflictException('Product with this slug already exists for this merchant');
+      throw new ConflictException(
+        'Product with this slug already exists for this merchant',
+      );
     }
 
     // Verify category exists
@@ -265,7 +304,10 @@ export class ProductCatalogService {
     return this.mapToProductResponse(product);
   }
 
-  async getProducts(searchDto: ProductSearchDto, merchantId?: string): Promise<ProductListDto> {
+  async getProducts(
+    searchDto: ProductSearchDto,
+    merchantId?: string,
+  ): Promise<ProductListDto> {
     const {
       search,
       categoryId,
@@ -284,13 +326,19 @@ export class ProductCatalogService {
     const skip = (page - 1) * limit;
     const take = Math.min(limit, 100); // Max 100 items per page
 
-    const whereClause: Prisma.ProductWhereInput = {};
+    const whereClause: Prisma.ProductWhereInput = {
+      // Exclude deleted products by default
+      status: { not: ProductStatus.DELETED },
+    };
 
     // Apply merchant filter (either from auth context or search parameter)
     if (merchantId) {
       whereClause.merchantId = merchantId;
     } else if (filterMerchantId) {
       whereClause.merchantId = filterMerchantId;
+    } else {
+      // If no merchant context (public access), only show published products
+      whereClause.status = ProductStatus.PUBLISHED;
     }
 
     // Apply search filters
@@ -310,7 +358,13 @@ export class ProductCatalogService {
     }
 
     if (status) {
-      whereClause.status = status;
+      // If a specific status is requested, use it (but still exclude DELETED unless explicitly requested)
+      if (status === ProductStatus.DELETED) {
+        // Only allow system admins to view deleted products
+        whereClause.status = ProductStatus.DELETED;
+      } else {
+        whereClause.status = status;
+      }
     }
 
     if (brand) {
@@ -324,7 +378,7 @@ export class ProductCatalogService {
     }
 
     if (tags) {
-      const tagArray = tags.split(',').map(tag => tag.trim());
+      const tagArray = tags.split(',').map((tag) => tag.trim());
       whereClause.tags = {
         hasSome: tagArray,
       };
@@ -332,7 +386,12 @@ export class ProductCatalogService {
 
     // Build orderBy clause
     const orderBy: Prisma.ProductOrderByWithRelationInput = {};
-    if (sortBy === 'name' || sortBy === 'basePrice' || sortBy === 'createdAt' || sortBy === 'updatedAt') {
+    if (
+      sortBy === 'name' ||
+      sortBy === 'basePrice' ||
+      sortBy === 'createdAt' ||
+      sortBy === 'updatedAt'
+    ) {
       orderBy[sortBy] = sortOrder;
     } else {
       orderBy.createdAt = 'desc'; // Default fallback
@@ -354,7 +413,7 @@ export class ProductCatalogService {
     ]);
 
     return {
-      products: products.map(product => this.mapToProductResponse(product)),
+      products: products.map((product) => this.mapToProductResponse(product)),
       pagination: {
         page,
         limit,
@@ -364,9 +423,29 @@ export class ProductCatalogService {
     };
   }
 
-  async getProductById(productId: string, includeVariants = true): Promise<ProductResponseDto> {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+  async getProductById(
+    productId: string,
+    includeVariants = true,
+    isPublicAccess = false,
+    merchantId?: string,
+  ): Promise<ProductResponseDto> {
+    const whereClause: Prisma.ProductWhereInput = {
+      id: productId,
+      status: { not: ProductStatus.DELETED }, // Exclude deleted products
+    };
+
+    // If public access, only show published products
+    if (isPublicAccess) {
+      whereClause.status = ProductStatus.PUBLISHED;
+    }
+
+    // If merchant ID is provided, filter by merchant ownership
+    if (merchantId) {
+      whereClause.merchantId = merchantId;
+    }
+
+    const product = await this.prisma.product.findFirst({
+      where: whereClause,
       include: {
         category: true,
         merchant: true,
@@ -381,7 +460,12 @@ export class ProductCatalogService {
     return this.mapToProductResponse(product);
   }
 
-  async updateProduct(productId: string, updateProductDto: UpdateProductDto, userId: string): Promise<ProductResponseDto> {
+  async updateProduct(
+    productId: string,
+    updateProductDto: UpdateProductDto,
+    userId: string,
+    merchantId?: string,
+  ): Promise<ProductResponseDto> {
     const existingProduct = await this.prisma.product.findUnique({
       where: { id: productId },
     });
@@ -390,18 +474,29 @@ export class ProductCatalogService {
       throw new NotFoundException('Product not found');
     }
 
-    // Check slug uniqueness if provided
-    if (updateProductDto.slug && updateProductDto.slug !== existingProduct.slug) {
+    // Check if the merchant owns this product
+    if (merchantId && existingProduct.merchantId !== merchantId) {
+      throw new NotFoundException('Product not found');
+    }
+
+    // Check slug uniqueness if provided (excluding deleted products)
+    if (
+      updateProductDto.slug &&
+      updateProductDto.slug !== existingProduct.slug
+    ) {
       const existingSlug = await this.prisma.product.findFirst({
         where: {
           merchantId: existingProduct.merchantId,
           slug: updateProductDto.slug,
           id: { not: productId },
+          status: { not: ProductStatus.DELETED },
         },
       });
 
       if (existingSlug) {
-        throw new ConflictException('Product with this slug already exists for this merchant');
+        throw new ConflictException(
+          'Product with this slug already exists for this merchant',
+        );
       }
     }
 
@@ -432,7 +527,7 @@ export class ProductCatalogService {
     return this.mapToProductResponse(updatedProduct);
   }
 
-  async deleteProduct(productId: string): Promise<void> {
+  async deleteProduct(productId: string, merchantId?: string): Promise<void> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
@@ -441,13 +536,30 @@ export class ProductCatalogService {
       throw new NotFoundException('Product not found');
     }
 
-    // Delete product (variants will be cascade deleted)
-    await this.prisma.product.delete({
+    // Check if the merchant owns this product
+    if (merchantId && product.merchantId !== merchantId) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.status === ProductStatus.DELETED) {
+      throw new BadRequestException('Product is already deleted');
+    }
+
+    // Soft delete: Update status to DELETED instead of hard deletion
+    await this.prisma.product.update({
       where: { id: productId },
+      data: {
+        status: ProductStatus.DELETED,
+        isActive: false, // Also set to inactive
+        updatedAt: new Date(),
+      },
     });
   }
 
-  async submitProductForApproval(productId: string, userId: string): Promise<ProductResponseDto> {
+  async submitProductForApproval(
+    productId: string,
+    userId: string,
+  ): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
@@ -457,7 +569,9 @@ export class ProductCatalogService {
     }
 
     if (product.status !== ProductStatus.DRAFT) {
-      throw new BadRequestException('Only draft products can be submitted for approval');
+      throw new BadRequestException(
+        'Only draft products can be submitted for approval',
+      );
     }
 
     const updatedProduct = await this.prisma.product.update({
@@ -485,7 +599,10 @@ export class ProductCatalogService {
     return this.mapToProductResponse(updatedProduct);
   }
 
-  async approveProduct(productId: string, userId: string): Promise<ProductResponseDto> {
+  async approveProduct(
+    productId: string,
+    userId: string,
+  ): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
       include: { merchant: true },
@@ -496,7 +613,9 @@ export class ProductCatalogService {
     }
 
     if (product.status !== ProductStatus.PENDING_REVIEW) {
-      throw new BadRequestException('Only products pending review can be approved');
+      throw new BadRequestException(
+        'Only products pending review can be approved',
+      );
     }
 
     const updatedProduct = await this.prisma.product.update({
@@ -526,7 +645,11 @@ export class ProductCatalogService {
     return this.mapToProductResponse(updatedProduct);
   }
 
-  async rejectProduct(productId: string, reason: string, userId: string): Promise<ProductResponseDto> {
+  async rejectProduct(
+    productId: string,
+    reason: string,
+    userId: string,
+  ): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
       include: { merchant: true },
@@ -537,7 +660,9 @@ export class ProductCatalogService {
     }
 
     if (product.status !== ProductStatus.PENDING_REVIEW) {
-      throw new BadRequestException('Only products pending review can be rejected');
+      throw new BadRequestException(
+        'Only products pending review can be rejected',
+      );
     }
 
     const updatedProduct = await this.prisma.product.update({
@@ -569,7 +694,11 @@ export class ProductCatalogService {
 
   // ==================== PRODUCT VARIANT MANAGEMENT ====================
 
-  async createProductVariant(productId: string, createVariantDto: CreateProductVariantDto): Promise<ProductVariantResponseDto> {
+  async createProductVariant(
+    productId: string,
+    createVariantDto: CreateProductVariantDto,
+    merchantId?: string,
+  ): Promise<ProductVariantResponseDto> {
     // Verify product exists
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
@@ -579,13 +708,20 @@ export class ProductCatalogService {
       throw new NotFoundException('Product not found');
     }
 
+    // Check if the merchant owns this product
+    if (merchantId && product.merchantId !== merchantId) {
+      throw new NotFoundException('Product not found');
+    }
+
     // Check if SKU already exists
     const existingVariant = await this.prisma.productVariant.findUnique({
       where: { sku: createVariantDto.sku },
     });
 
     if (existingVariant) {
-      throw new ConflictException('Product variant with this SKU already exists');
+      throw new ConflictException(
+        'Product variant with this SKU already exists',
+      );
     }
 
     // If this is set as default, unset other defaults
@@ -624,19 +760,21 @@ export class ProductCatalogService {
       include: {
         product: true,
       },
-      orderBy: [
-        { isDefault: 'desc' },
-        { name: 'asc' },
-      ],
+      orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
     });
 
     return {
-      variants: variants.map(variant => this.mapToProductVariantResponse(variant)),
+      variants: variants.map((variant) =>
+        this.mapToProductVariantResponse(variant),
+      ),
       totalCount: variants.length,
     };
   }
 
-  async updateProductVariant(variantId: string, updateVariantDto: UpdateProductVariantDto): Promise<ProductVariantResponseDto> {
+  async updateProductVariant(
+    variantId: string,
+    updateVariantDto: UpdateProductVariantDto,
+  ): Promise<ProductVariantResponseDto> {
     const existingVariant = await this.prisma.productVariant.findUnique({
       where: { id: variantId },
     });
@@ -683,17 +821,23 @@ export class ProductCatalogService {
 
   // ==================== PRODUCT ATTRIBUTE TEMPLATE MANAGEMENT ====================
 
-  async createAttributeTemplate(createAttributeDto: CreateProductAttributeTemplateDto, userId: string): Promise<ProductAttributeTemplateResponseDto> {
+  async createAttributeTemplate(
+    createAttributeDto: CreateProductAttributeTemplateDto,
+    userId: string,
+  ): Promise<ProductAttributeTemplateResponseDto> {
     // Check if attribute name already exists for this category
-    const existingAttribute = await this.prisma.productAttributeTemplate.findFirst({
-      where: {
-        name: createAttributeDto.name,
-        categoryId: createAttributeDto.categoryId,
-      },
-    });
+    const existingAttribute =
+      await this.prisma.productAttributeTemplate.findFirst({
+        where: {
+          name: createAttributeDto.name,
+          categoryId: createAttributeDto.categoryId,
+        },
+      });
 
     if (existingAttribute) {
-      throw new ConflictException('Attribute with this name already exists for this category');
+      throw new ConflictException(
+        'Attribute with this name already exists for this category',
+      );
     }
 
     // Verify category exists
@@ -718,12 +862,17 @@ export class ProductCatalogService {
     return this.mapToAttributeTemplateResponse(attribute);
   }
 
-  async getAttributeTemplates(filter: AttributeFilterDto): Promise<ProductAttributeTemplateListDto> {
+  async getAttributeTemplates(
+    filter: AttributeFilterDto,
+  ): Promise<ProductAttributeTemplateListDto> {
     let allAttributes: any[] = [];
 
     if (filter.categoryId) {
       // Get attributes for this category and all parent categories (inheritance)
-      allAttributes = await this.getAttributeTemplatesWithInheritance(filter.categoryId, filter);
+      allAttributes = await this.getAttributeTemplatesWithInheritance(
+        filter.categoryId,
+        filter,
+      );
     } else {
       // Get all attributes without category filtering
       const whereClause: Prisma.ProductAttributeTemplateWhereInput = {};
@@ -753,10 +902,7 @@ export class ProductCatalogService {
         include: {
           category: true,
         },
-        orderBy: [
-          { sortOrder: 'asc' },
-          { name: 'asc' },
-        ],
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       });
     }
 
@@ -764,23 +910,27 @@ export class ProductCatalogService {
     let filteredAttributes = allAttributes;
 
     if (filter.type) {
-      filteredAttributes = filteredAttributes.filter(attr => attr.type === filter.type);
+      filteredAttributes = filteredAttributes.filter(
+        (attr) => attr.type === filter.type,
+      );
     }
 
     if (filter.requiredOnly) {
-      filteredAttributes = filteredAttributes.filter(attr => attr.isRequired);
+      filteredAttributes = filteredAttributes.filter((attr) => attr.isRequired);
     }
 
     if (filter.filterableOnly) {
-      filteredAttributes = filteredAttributes.filter(attr => attr.isFilterable);
+      filteredAttributes = filteredAttributes.filter(
+        (attr) => attr.isFilterable,
+      );
     }
 
     if (filter.variantOnly) {
-      filteredAttributes = filteredAttributes.filter(attr => attr.isVariant);
+      filteredAttributes = filteredAttributes.filter((attr) => attr.isVariant);
     }
 
     if (filter.activeOnly !== false) {
-      filteredAttributes = filteredAttributes.filter(attr => attr.isActive);
+      filteredAttributes = filteredAttributes.filter((attr) => attr.isActive);
     }
 
     // Remove duplicates (child category attributes override parent ones with same name)
@@ -788,10 +938,12 @@ export class ProductCatalogService {
 
     // Count stats
     const totalCount = uniqueAttributes.length;
-    const activeCount = uniqueAttributes.filter(attr => attr.isActive).length;
+    const activeCount = uniqueAttributes.filter((attr) => attr.isActive).length;
 
     return {
-      attributes: uniqueAttributes.map(attr => this.mapToAttributeTemplateResponse(attr)),
+      attributes: uniqueAttributes.map((attr) =>
+        this.mapToAttributeTemplateResponse(attr),
+      ),
       totalCount,
       activeCount,
     };
@@ -800,12 +952,15 @@ export class ProductCatalogService {
   /**
    * Get attribute templates for a category including inherited ones from parent categories
    */
-  private async getAttributeTemplatesWithInheritance(categoryId: string, filter: AttributeFilterDto): Promise<any[]> {
+  private async getAttributeTemplatesWithInheritance(
+    categoryId: string,
+    filter: AttributeFilterDto,
+  ): Promise<any[]> {
     // Get the category hierarchy path (from root to current category)
     const categoryPath = await this.getCategoryPath(categoryId);
 
     // Get all category IDs in the path (from parent to child)
-    const categoryIds = categoryPath.map(cat => cat.id);
+    const categoryIds = categoryPath.map((cat) => cat.id);
 
     // Fetch attributes for all categories in the hierarchy
     const allAttributes = await this.prisma.productAttributeTemplate.findMany({
@@ -816,10 +971,7 @@ export class ProductCatalogService {
       include: {
         category: true,
       },
-      orderBy: [
-        { sortOrder: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
 
     return allAttributes;
@@ -872,7 +1024,13 @@ export class ProductCatalogService {
         // In a real scenario, you might want to track category depth more precisely
         if (attr.categoryId && existing.categoryId) {
           // Keep the new one (assuming it's from a child category)
-          attributeMap.set(key, { ...attr, inheritedFrom: existing.categoryId !== attr.categoryId ? existing.category?.displayName || existing.category?.name : undefined });
+          attributeMap.set(key, {
+            ...attr,
+            inheritedFrom:
+              existing.categoryId !== attr.categoryId
+                ? existing.category?.displayName || existing.category?.name
+                : undefined,
+          });
         }
       } else {
         attributeMap.set(key, attr);
@@ -882,10 +1040,14 @@ export class ProductCatalogService {
     return Array.from(attributeMap.values());
   }
 
-  async updateAttributeTemplate(attributeId: string, updateAttributeDto: UpdateProductAttributeTemplateDto): Promise<ProductAttributeTemplateResponseDto> {
-    const existingAttribute = await this.prisma.productAttributeTemplate.findUnique({
-      where: { id: attributeId },
-    });
+  async updateAttributeTemplate(
+    attributeId: string,
+    updateAttributeDto: UpdateProductAttributeTemplateDto,
+  ): Promise<ProductAttributeTemplateResponseDto> {
+    const existingAttribute =
+      await this.prisma.productAttributeTemplate.findUnique({
+        where: { id: attributeId },
+      });
 
     if (!existingAttribute) {
       throw new NotFoundException('Attribute template not found');
@@ -918,7 +1080,10 @@ export class ProductCatalogService {
 
   // ==================== HELPER METHODS ====================
 
-  private mapToCategoryResponse(category: any, includeProductCount = false): CategoryResponseDto {
+  private mapToCategoryResponse(
+    category: any,
+    includeProductCount = false,
+  ): CategoryResponseDto {
     const response: CategoryResponseDto = {
       id: category.id,
       name: category.name,
@@ -938,7 +1103,9 @@ export class ProductCatalogService {
     };
 
     if (category.children) {
-      response.children = category.children.map((child: any) => this.mapToCategoryResponse(child, includeProductCount));
+      response.children = category.children.map((child: any) =>
+        this.mapToCategoryResponse(child, includeProductCount),
+      );
     }
 
     if (includeProductCount && category._count) {
@@ -962,11 +1129,15 @@ export class ProductCatalogService {
       merchantId: product.merchantId,
       brand: product.brand,
       model: product.model,
-      weight: product.weight ? parseFloat(product.weight.toString()) : undefined,
+      weight: product.weight
+        ? parseFloat(product.weight.toString())
+        : undefined,
       dimensions: product.dimensions,
       basePrice: parseFloat(product.basePrice.toString()),
       msrp: product.msrp ? parseFloat(product.msrp.toString()) : undefined,
-      costPrice: product.costPrice ? parseFloat(product.costPrice.toString()) : undefined,
+      costPrice: product.costPrice
+        ? parseFloat(product.costPrice.toString())
+        : undefined,
       images: product.images || [],
       videos: product.videos || [],
       documents: product.documents || [],
@@ -1003,7 +1174,9 @@ export class ProductCatalogService {
     }
 
     if (product.variants) {
-      response.variants = product.variants.map((variant: any) => this.mapToProductVariantResponse(variant));
+      response.variants = product.variants.map((variant: any) =>
+        this.mapToProductVariantResponse(variant),
+      );
     }
 
     return response;
@@ -1017,8 +1190,12 @@ export class ProductCatalogService {
       name: variant.name,
       attributes: variant.attributes ? JSON.parse(variant.attributes) : {},
       price: variant.price ? parseFloat(variant.price.toString()) : undefined,
-      costPrice: variant.costPrice ? parseFloat(variant.costPrice.toString()) : undefined,
-      weight: variant.weight ? parseFloat(variant.weight.toString()) : undefined,
+      costPrice: variant.costPrice
+        ? parseFloat(variant.costPrice.toString())
+        : undefined,
+      weight: variant.weight
+        ? parseFloat(variant.weight.toString())
+        : undefined,
       barcode: variant.barcode,
       mpn: variant.mpn,
       images: variant.images || [],
@@ -1041,7 +1218,9 @@ export class ProductCatalogService {
     return response;
   }
 
-  private mapToAttributeTemplateResponse(attribute: any): ProductAttributeTemplateResponseDto {
+  private mapToAttributeTemplateResponse(
+    attribute: any,
+  ): ProductAttributeTemplateResponseDto {
     const response: ProductAttributeTemplateResponseDto = {
       id: attribute.id,
       name: attribute.name,
@@ -1052,7 +1231,9 @@ export class ProductCatalogService {
       isFilterable: attribute.isFilterable,
       isVariant: attribute.isVariant,
       options: attribute.options || [],
-      validation: attribute.validation ? JSON.parse(attribute.validation) : undefined,
+      validation: attribute.validation
+        ? JSON.parse(attribute.validation)
+        : undefined,
       categoryId: attribute.categoryId,
       sortOrder: attribute.sortOrder || 0,
       unit: attribute.unit,

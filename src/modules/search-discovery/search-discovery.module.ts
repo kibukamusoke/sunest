@@ -6,15 +6,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
 
 @Module({
-    imports: [
-        NotificationsModule,
-        UsersModule,
-    ],
-    controllers: [SearchDiscoveryController],
-    providers: [
-        SearchDiscoveryService,
-        PrismaService,
-    ],
-    exports: [SearchDiscoveryService],
+  imports: [NotificationsModule, UsersModule],
+  controllers: [SearchDiscoveryController],
+  providers: [SearchDiscoveryService, PrismaService],
+  exports: [SearchDiscoveryService],
 })
-export class SearchDiscoveryModule { }
+export class SearchDiscoveryModule {}

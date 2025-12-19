@@ -1,0 +1,36 @@
+import { PrismaService } from '../../config/prisma.service';
+import { NotificationService } from '../notifications/notification.service';
+import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto, CategoryHierarchyDto, CreateProductDto, UpdateProductDto, ProductResponseDto, ProductListDto, ProductSearchDto, CreateProductVariantDto, UpdateProductVariantDto, ProductVariantResponseDto, ProductVariantListDto, CreateProductAttributeTemplateDto, UpdateProductAttributeTemplateDto, ProductAttributeTemplateResponseDto, ProductAttributeTemplateListDto, AttributeFilterDto } from './dto';
+export declare class ProductCatalogService {
+    private readonly prisma;
+    private readonly notificationService;
+    constructor(prisma: PrismaService, notificationService: NotificationService);
+    createCategory(createCategoryDto: CreateCategoryDto, userId: string): Promise<CategoryResponseDto>;
+    getCategoryHierarchy(includeProducts?: boolean, activeOnly?: boolean): Promise<CategoryHierarchyDto>;
+    getCategoryById(categoryId: string, includeProducts?: boolean): Promise<CategoryResponseDto>;
+    updateCategory(categoryId: string, updateCategoryDto: UpdateCategoryDto, userId: string): Promise<CategoryResponseDto>;
+    deleteCategory(categoryId: string): Promise<void>;
+    createProduct(createProductDto: CreateProductDto, merchantId: string, userId: string): Promise<ProductResponseDto>;
+    getProducts(searchDto: ProductSearchDto, merchantId?: string): Promise<ProductListDto>;
+    getProductById(productId: string, includeVariants?: boolean, isPublicAccess?: boolean, merchantId?: string): Promise<ProductResponseDto>;
+    updateProduct(productId: string, updateProductDto: UpdateProductDto, userId: string, merchantId?: string): Promise<ProductResponseDto>;
+    deleteProduct(productId: string, merchantId?: string): Promise<void>;
+    submitProductForApproval(productId: string, userId: string): Promise<ProductResponseDto>;
+    approveProduct(productId: string, userId: string): Promise<ProductResponseDto>;
+    rejectProduct(productId: string, reason: string, userId: string): Promise<ProductResponseDto>;
+    createProductVariant(productId: string, createVariantDto: CreateProductVariantDto, merchantId?: string): Promise<ProductVariantResponseDto>;
+    getProductVariants(productId: string): Promise<ProductVariantListDto>;
+    updateProductVariant(variantId: string, updateVariantDto: UpdateProductVariantDto): Promise<ProductVariantResponseDto>;
+    deleteProductVariant(variantId: string): Promise<void>;
+    createAttributeTemplate(createAttributeDto: CreateProductAttributeTemplateDto, userId: string): Promise<ProductAttributeTemplateResponseDto>;
+    getAttributeTemplates(filter: AttributeFilterDto): Promise<ProductAttributeTemplateListDto>;
+    private getAttributeTemplatesWithInheritance;
+    private getCategoryPath;
+    private removeDuplicateAttributes;
+    updateAttributeTemplate(attributeId: string, updateAttributeDto: UpdateProductAttributeTemplateDto): Promise<ProductAttributeTemplateResponseDto>;
+    deleteAttributeTemplate(attributeId: string): Promise<void>;
+    private mapToCategoryResponse;
+    private mapToProductResponse;
+    private mapToProductVariantResponse;
+    private mapToAttributeTemplateResponse;
+}

@@ -1,0 +1,37 @@
+import { PrismaService } from '../../config/prisma.service';
+import { NotificationService } from '../notifications/notification.service';
+import { CreateRFQDto, UpdateRFQDto, RFQResponseDto, RFQListDto, RFQFilterDto, SubmitRFQDto, CreateQuoteDto, QuoteResponseDto, QuoteListDto, QuoteFilterDto, AcceptQuoteDto, RejectQuoteDto, CreateRFQCommentDto, RFQCommentListDto, RFQCommentResponseDto } from './dto';
+export declare class RFQManagementService {
+    private readonly prisma;
+    private readonly notificationService;
+    constructor(prisma: PrismaService, notificationService: NotificationService);
+    createRFQ(createRFQDto: CreateRFQDto, userId: string): Promise<RFQResponseDto>;
+    getRFQById(rfqId: string, userId: string): Promise<RFQResponseDto>;
+    updateRFQ(rfqId: string, updateRFQDto: UpdateRFQDto, userId: string): Promise<RFQResponseDto>;
+    deleteRFQ(rfqId: string, userId: string): Promise<void>;
+    submitRFQ(rfqId: string, submitDto: SubmitRFQDto, userId: string): Promise<RFQResponseDto>;
+    listRFQs(filterDto: RFQFilterDto, userId: string, userRoles: string[]): Promise<RFQListDto>;
+    createQuote(createQuoteDto: CreateQuoteDto, merchantId: string, userId: string): Promise<QuoteResponseDto>;
+    submitQuote(quoteId: string, merchantId: string, userId: string): Promise<QuoteResponseDto>;
+    acceptQuote(quoteId: string, acceptDto: AcceptQuoteDto, userId: string): Promise<QuoteResponseDto>;
+    rejectQuote(quoteId: string, rejectDto: RejectQuoteDto, userId: string): Promise<QuoteResponseDto>;
+    listQuotes(filterDto: QuoteFilterDto, userId: string, userRoles: string[]): Promise<QuoteListDto>;
+    addRFQComment(rfqId: string, commentDto: CreateRFQCommentDto, userId: string): Promise<RFQCommentResponseDto>;
+    getRFQComments(rfqId: string, userId: string, includeInternal?: boolean): Promise<RFQCommentListDto>;
+    private generateRFQNumber;
+    private generateQuoteNumber;
+    private getRFQInclude;
+    private getQuoteInclude;
+    private mapToRFQResponse;
+    private mapToQuoteResponse;
+    private mapToRFQCommentResponse;
+    private calculateQuoteTotals;
+    private checkRFQAccess;
+    private buildRFQWhereClause;
+    private buildQuoteWhereClause;
+    private updateRFQStatusOnQuoteSubmission;
+    private notifyMerchantsOfNewRFQ;
+    private notifyRequesterOfNewQuote;
+    private notifyMerchantOfQuoteAcceptance;
+    private notifyMerchantOfQuoteRejection;
+}

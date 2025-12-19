@@ -1,0 +1,35 @@
+import { PrismaService } from '../../config/prisma.service';
+import { NotificationService } from '../notifications/notification.service';
+import { CreateOrderDto, UpdateOrderDto, UploadPaymentProofDto, OrderFilterDto, OrderResponseDto, OrderListResponseDto } from './dto/order.dto';
+import { CreateFulfillmentDto, AssignFulfillmentDto, FulfillmentResponseDto } from './dto/fulfillment.dto';
+import { CreateShipmentDto, UpdateShipmentDto, ShipmentResponseDto } from './dto/shipping.dto';
+import { CreateInvoiceDto, InvoiceResponseDto } from './dto/invoice.dto';
+export declare class OrderFulfillmentService {
+    private readonly prisma;
+    private readonly notificationService;
+    constructor(prisma: PrismaService, notificationService: NotificationService);
+    private getCustomerRecipientEmails;
+    private sendOrderStatusUpdateEmail;
+    createOrder(createOrderDto: CreateOrderDto, userId: string): Promise<OrderResponseDto>;
+    getOrderById(id: string, userId: string, userRoles?: string[]): Promise<OrderResponseDto>;
+    updateOrder(id: string, updateOrderDto: UpdateOrderDto, userId: string, userRoles?: string[]): Promise<OrderResponseDto>;
+    uploadPaymentProof(orderId: string, userId: string, userRoles: string[] | undefined, dto: UploadPaymentProofDto): Promise<OrderResponseDto>;
+    confirmOrder(id: string, userId: string): Promise<OrderResponseDto>;
+    cancelOrder(id: string, reason: string, userId: string): Promise<OrderResponseDto>;
+    listOrders(filterDto: OrderFilterDto, userId: string, userRoles?: string[]): Promise<OrderListResponseDto>;
+    createFulfillment(createFulfillmentDto: CreateFulfillmentDto, userId: string): Promise<FulfillmentResponseDto>;
+    assignFulfillment(id: string, assignDto: AssignFulfillmentDto, userId: string): Promise<FulfillmentResponseDto>;
+    startFulfillment(id: string, userId: string): Promise<FulfillmentResponseDto>;
+    createShipment(createShipmentDto: CreateShipmentDto, userId: string): Promise<ShipmentResponseDto>;
+    markShipmentShipped(id: string, trackingNumber: string, userId: string): Promise<ShipmentResponseDto>;
+    updateShipment(id: string, updateShipmentDto: UpdateShipmentDto, userId: string): Promise<ShipmentResponseDto>;
+    createInvoice(createInvoiceDto: CreateInvoiceDto, userId: string): Promise<InvoiceResponseDto>;
+    private generateOrderNumber;
+    private generateFulfillmentNumber;
+    private generateShipmentNumber;
+    private generateInvoiceNumber;
+    private mapOrderToResponse;
+    private mapFulfillmentToResponse;
+    private mapShipmentToResponse;
+    private mapInvoiceToResponse;
+}

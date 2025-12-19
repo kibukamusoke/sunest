@@ -401,6 +401,43 @@ export class ProductCatalogController {
     return this.productCatalogService.getAttributeTemplates(filter);
   }
 
+  @Get('admin/:productId')
+  @UseGuards(RolesGuard, PermissionsGuard)
+  @SystemAdmin()
+  @RequireSystemManage()
+  @ApiOperation({
+    summary: 'Get product by ID (Admin)',
+    description:
+      'Retrieve a specific product by its ID. System admin endpoint - returns products in any status except DELETED.',
+  })
+  @ApiParam({ name: 'productId', description: 'Product ID' })
+  @ApiQuery({
+    name: 'includeVariants',
+    required: false,
+    type: Boolean,
+    description: 'Include product variants',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Product retrieved successfully',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Product not found',
+  })
+  async getAdminProductById(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Query('includeVariants', new ParseBoolPipe({ optional: true }))
+    includeVariants = true,
+  ): Promise<ProductResponseDto> {
+    return this.productCatalogService.getProductById(
+      productId,
+      includeVariants,
+      false,
+    );
+  }
+
   @Get(':productId')
   @Public()
   @ApiOperation({

@@ -1,0 +1,9 @@
+export declare const PERMISSIONS_KEY = "permissions";
+export declare const Permissions: (...permissions: string[]) => import("@nestjs/common").CustomDecorator<string>;
+export declare const RequireSystemManage: () => import("@nestjs/common").CustomDecorator<string>;
+export declare const RequireMerchantManage: () => import("@nestjs/common").CustomDecorator<string>;
+export declare const RequireMerchantApprove: () => import("@nestjs/common").CustomDecorator<string>;
+export declare const RequireProductManage: () => import("@nestjs/common").CustomDecorator<string>;
+export declare const RequireOrderManage: () => import("@nestjs/common").CustomDecorator<string>;
+export declare const RequireRfqManage: () => import("@nestjs/common").CustomDecorator<string>;
+export declare const RequireBuyerActions: () => import("@nestjs/common").CustomDecorator<string>;

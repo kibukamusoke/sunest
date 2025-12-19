@@ -3,9 +3,9 @@ import { SystemConfigurationsController } from './system-configurations.controll
 import { SystemConfigurationsService } from './system-configurations.service';
 
 @Module({
-  controllers: [SystemConfigurationsController],
-  providers: [SystemConfigurationsService],
+    controllers: [SystemConfigurationsController],
+    providers: [SystemConfigurationsService],
 })
-export class SystemConfigurationsModule {}
+export class SystemConfigurationsModule { }
 
 

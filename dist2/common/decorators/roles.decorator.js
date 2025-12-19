@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AnyRole = exports.AnyMerchantRole = exports.Buyer = exports.MerchantUser = exports.MerchantAdmin = exports.SystemAdmin = exports.Roles = exports.ROLES_KEY = void 0;
+const common_1 = require("@nestjs/common");
+exports.ROLES_KEY = 'roles';
+const Roles = (...roles) => (0, common_1.SetMetadata)(exports.ROLES_KEY, roles);
+exports.Roles = Roles;
+const SystemAdmin = () => (0, exports.Roles)('system_admin');
+exports.SystemAdmin = SystemAdmin;
+const MerchantAdmin = () => (0, exports.Roles)('merchant_admin');
+exports.MerchantAdmin = MerchantAdmin;
+const MerchantUser = () => (0, exports.Roles)('merchant_user', 'merchant_admin');
+exports.MerchantUser = MerchantUser;
+const Buyer = () => (0, exports.Roles)('buyer');
+exports.Buyer = Buyer;
+const AnyMerchantRole = () => (0, exports.Roles)('merchant_admin', 'merchant_user');
+exports.AnyMerchantRole = AnyMerchantRole;
+const AnyRole = () => (0, exports.Roles)('system_admin', 'merchant_admin', 'merchant_user', 'buyer');
+exports.AnyRole = AnyRole;
+//# sourceMappingURL=roles.decorator.js.map

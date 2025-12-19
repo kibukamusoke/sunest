@@ -1,0 +1,37 @@
+import { PrismaService } from '../../config/prisma.service';
+import { NotificationService } from '../notifications/notification.service';
+import { OrderFulfillmentService } from '../order-fulfillment/order-fulfillment.service';
+import { InitiateCheckoutDto, UpdateCheckoutShippingDto, UpdateCheckoutBillingDto, UpdateCheckoutPaymentDto, UpdateCheckoutNotesDto, SubmitCheckoutDto, ApproveCheckoutDto, CheckoutResponseDto, CheckoutFilterDto, CheckoutListDto, ApprovalRequirementDto } from './dto';
+export declare class CheckoutService {
+    private readonly prisma;
+    private readonly notificationService;
+    private readonly orderFulfillmentService;
+    private readonly logger;
+    constructor(prisma: PrismaService, notificationService: NotificationService, orderFulfillmentService: OrderFulfillmentService);
+    initiateCheckout(initiateDto: InitiateCheckoutDto, userId: string): Promise<CheckoutResponseDto>;
+    getCheckout(checkoutId: string, userId: string): Promise<CheckoutResponseDto>;
+    updateCheckoutShipping(checkoutId: string, shippingDto: UpdateCheckoutShippingDto, userId: string): Promise<CheckoutResponseDto>;
+    updateCheckoutBilling(checkoutId: string, billingDto: UpdateCheckoutBillingDto, userId: string): Promise<CheckoutResponseDto>;
+    updateCheckoutPayment(checkoutId: string, paymentDto: UpdateCheckoutPaymentDto, userId: string): Promise<CheckoutResponseDto>;
+    updateCheckoutNotes(checkoutId: string, notesDto: UpdateCheckoutNotesDto, userId: string): Promise<CheckoutResponseDto>;
+    submitCheckout(checkoutId: string, submitDto: SubmitCheckoutDto, userId: string): Promise<CheckoutResponseDto>;
+    approveCheckout(checkoutId: string, approvalDto: ApproveCheckoutDto, userId: string): Promise<CheckoutResponseDto>;
+    completeCheckout(checkoutId: string, userId: string): Promise<CheckoutResponseDto>;
+    listCheckouts(filterDto: CheckoutFilterDto, userId: string, userRoles: string[]): Promise<CheckoutListDto>;
+    getApprovalRequirement(userId: string, totalAmount: number, companyId?: string): Promise<ApprovalRequirementDto>;
+    private checkApprovalRequirement;
+    private checkApprovalAuthority;
+    private getUserApprovalLimit;
+    private getEligibleApprovers;
+    private calculateCheckoutPricing;
+    private sendApprovalNotification;
+    private sendApprovalDecisionNotification;
+    private updateCheckoutTotals;
+    private buildOrderDtoFromCheckout;
+    private completeApprovedCheckout;
+    private validateCheckoutAccess;
+    private getCheckoutIncludeOptions;
+    private mapCheckoutToResponseDto;
+    private mapAddressToResponseDto;
+    private formatAddress;
+}

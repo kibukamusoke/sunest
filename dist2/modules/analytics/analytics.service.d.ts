@@ -1,0 +1,51 @@
+import { PrismaService } from '../../config/prisma.service';
+import { TimeGranularity } from '@prisma/client';
+import { CreateAnalyticsSessionDto, UpdateAnalyticsSessionDto, AnalyticsSessionResponseDto, CreateAnalyticsEventDto, AnalyticsEventResponseDto, BusinessMetricQueryDto, BusinessMetricResponseDto, AnalyticsOverviewDto, AnalyticsQueryDto } from './dto/analytics.dto';
+export declare class AnalyticsService {
+    private prisma;
+    private readonly logger;
+    constructor(prisma: PrismaService);
+    createSession(data: CreateAnalyticsSessionDto): Promise<AnalyticsSessionResponseDto>;
+    updateSession(sessionId: string, data: UpdateAnalyticsSessionDto): Promise<AnalyticsSessionResponseDto>;
+    getSession(sessionId: string): Promise<AnalyticsSessionResponseDto | null>;
+    getSessions(query: AnalyticsQueryDto): Promise<{
+        sessions: AnalyticsSessionResponseDto[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
+    createEvent(data: CreateAnalyticsEventDto): Promise<AnalyticsEventResponseDto>;
+    getEvents(sessionId: string): Promise<AnalyticsEventResponseDto[]>;
+    getEventsByType(eventType: string, query: AnalyticsQueryDto): Promise<{
+        events: AnalyticsEventResponseDto[];
+        total: number;
+    }>;
+    getBusinessMetrics(query: BusinessMetricQueryDto): Promise<BusinessMetricResponseDto[]>;
+    calculateBusinessMetrics(startDate: Date, endDate: Date, granularity?: TimeGranularity): Promise<void>;
+    private calculateMetricsForDate;
+    getAnalyticsOverview(startDate: Date, endDate: Date, previousStartDate: Date, previousEndDate: Date): Promise<AnalyticsOverviewDto>;
+    private calculateTotalRevenue;
+    private calculateTotalOrders;
+    private calculateTotalUsers;
+    private calculateActiveUsers;
+    private calculateNewUsers;
+    private calculateActiveMerchants;
+    private calculateNewMerchants;
+    private calculateTotalProducts;
+    private calculateActiveProducts;
+    private calculateProductViews;
+    private calculateAddToCartEvents;
+    private calculateAverageOrderValue;
+    private calculateConversionRate;
+    private getTopProductsByRevenue;
+    private getTopMerchantsByRevenue;
+    private getRevenueChart;
+    private getOrdersChart;
+    private calculateGrowthPercentage;
+    private generateDateRange;
+    private getDateRange;
+    private mapSessionToResponse;
+    private mapEventToResponse;
+    private mapBusinessMetricToResponse;
+}

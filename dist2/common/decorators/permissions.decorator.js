@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RequireBuyerActions = exports.RequireRfqManage = exports.RequireOrderManage = exports.RequireProductManage = exports.RequireMerchantApprove = exports.RequireMerchantManage = exports.RequireSystemManage = exports.Permissions = exports.PERMISSIONS_KEY = void 0;
+const common_1 = require("@nestjs/common");
+exports.PERMISSIONS_KEY = 'permissions';
+const Permissions = (...permissions) => (0, common_1.SetMetadata)(exports.PERMISSIONS_KEY, permissions);
+exports.Permissions = Permissions;
+const RequireSystemManage = () => (0, exports.Permissions)('system:manage');
+exports.RequireSystemManage = RequireSystemManage;
+const RequireMerchantManage = () => (0, exports.Permissions)('merchant:manage');
+exports.RequireMerchantManage = RequireMerchantManage;
+const RequireMerchantApprove = () => (0, exports.Permissions)('merchant:approve');
+exports.RequireMerchantApprove = RequireMerchantApprove;
+const RequireProductManage = () => (0, exports.Permissions)('product:manage');
+exports.RequireProductManage = RequireProductManage;
+const RequireOrderManage = () => (0, exports.Permissions)('order:manage');
+exports.RequireOrderManage = RequireOrderManage;
+const RequireRfqManage = () => (0, exports.Permissions)('rfq:manage');
+exports.RequireRfqManage = RequireRfqManage;
+const RequireBuyerActions = () => (0, exports.Permissions)('buyer:actions');
+exports.RequireBuyerActions = RequireBuyerActions;
+//# sourceMappingURL=permissions.decorator.js.map

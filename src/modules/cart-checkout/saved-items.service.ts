@@ -28,6 +28,10 @@ export class SavedItemsService {
     createDto: CreateSavedItemDto,
     userId: string,
   ): Promise<SavedItemResponseDto> {
+    if (!createDto.productId && !createDto.productVariantId) {
+      throw new BadRequestException('Either productId or productVariantId is required');
+    }
+
     // Validate product exists if productId provided
     if (createDto.productId) {
       const product = await this.prisma.product.findUnique({
@@ -49,12 +53,18 @@ export class SavedItemsService {
 
     // Check if item already exists in saved items
     const existingItem = await this.prisma.savedItem.findFirst({
-      where: {
-        userId,
-        productId: createDto.productId,
-        productVariantId: createDto.productVariantId,
-        isActive: true,
-      },
+      where: createDto.productVariantId
+        ? {
+            userId,
+            productVariantId: createDto.productVariantId,
+            isActive: true,
+          }
+        : {
+            userId,
+            productId: createDto.productId,
+            productVariantId: null,
+            isActive: true,
+          },
     });
 
     if (existingItem) {
@@ -475,16 +485,19 @@ export class SavedItemsService {
       productVariant: {
         include: {
           inventoryItems: true,
+          product: true,
         },
       },
     };
   }
 
   private mapSavedItemToResponseDto(savedItem: any): SavedItemResponseDto {
+    const resolvedProduct = savedItem.product || savedItem.productVariant?.product;
+
     const currentPrice = savedItem.productVariant?.price
       ? parseFloat(savedItem.productVariant.price.toString())
-      : savedItem.product?.basePrice
-        ? parseFloat(savedItem.product.basePrice.toString())
+      : resolvedProduct?.basePrice
+        ? parseFloat(resolvedProduct.basePrice.toString())
         : null;
 
     const savedPrice = savedItem.savedPrice
@@ -500,15 +513,15 @@ export class SavedItemsService {
     return {
       id: savedItem.id,
       userId: savedItem.userId,
-      product: savedItem.product
+      product: resolvedProduct
         ? {
-            id: savedItem.product.id,
-            name: savedItem.product.name,
-            sku: savedItem.product.sku,
-            brand: savedItem.product.brand,
-            images: savedItem.product.images,
-            status: savedItem.product.status,
-            basePrice: parseFloat(savedItem.product.basePrice.toString()),
+            id: resolvedProduct.id,
+            name: resolvedProduct.name,
+            sku: resolvedProduct.sku,
+            brand: resolvedProduct.brand,
+            images: resolvedProduct.images,
+            status: resolvedProduct.status,
+            basePrice: parseFloat(resolvedProduct.basePrice.toString()),
           }
         : undefined,
       productVariant: savedItem.productVariant
@@ -540,20 +553,22 @@ export class SavedItemsService {
   }
 
   private calculateItemAvailability(savedItem: any) {
-    if (!savedItem.product) {
+    const resolvedProduct = savedItem.product || savedItem.productVariant?.product;
+
+    if (!resolvedProduct) {
       return { isAvailable: true, message: 'Custom item' };
     }
 
     if (
-      savedItem.product.status !== 'PUBLISHED' ||
-      !savedItem.product.isActive
+      resolvedProduct.status !== 'PUBLISHED' ||
+      !resolvedProduct.isActive
     ) {
       return { isAvailable: false, message: 'Product no longer available' };
     }
 
     const inventoryItems =
       savedItem.productVariant?.inventoryItems ||
-      savedItem.product.inventoryItems ||
+      resolvedProduct.inventoryItems ||
       [];
     const totalAvailable = inventoryItems.reduce(
       (sum: number, inv: any) => sum + inv.quantityOnHand,

@@ -1,0 +1,30 @@
+import { PrismaService } from '../../config/prisma.service';
+import { CreateMetricDto, UpdateMetricDto, MetricResponseDto, MetricListQueryDto, MetricListResponseDto, CreateDataPointDto, DataPointResponseDto, MetricDataQueryDto, MetricDataResponseDto } from './dto/metric.dto';
+export declare class MetricsService {
+    private prisma;
+    private readonly logger;
+    constructor(prisma: PrismaService);
+    createMetric(data: CreateMetricDto): Promise<MetricResponseDto>;
+    getMetrics(query: MetricListQueryDto): Promise<MetricListResponseDto>;
+    getMetric(metricId: string): Promise<MetricResponseDto | null>;
+    updateMetric(metricId: string, data: UpdateMetricDto): Promise<MetricResponseDto>;
+    deleteMetric(metricId: string): Promise<void>;
+    createDataPoint(data: CreateDataPointDto): Promise<DataPointResponseDto>;
+    createBulkDataPoints(dataPoints: CreateDataPointDto[]): Promise<void>;
+    getMetricData(metricId: string, query: MetricDataQueryDto): Promise<MetricDataResponseDto>;
+    calculateMetric(metricId: string, startDate: Date, endDate: Date): Promise<void>;
+    calculateAllMetrics(startDate: Date, endDate: Date): Promise<void>;
+    private calculateSalesRevenue;
+    private calculateOrderCount;
+    private calculateUserRegistrations;
+    private calculateProductViews;
+    private calculateSearchQueries;
+    private calculateConversionRate;
+    private calculateCartAbandonmentRate;
+    private calculateAverageOrderValue;
+    private calculateCustomerLifetimeValue;
+    private calculateAverageFulfillmentTime;
+    private groupDataPoints;
+    private mapMetricToResponse;
+    private mapDataPointToResponse;
+}

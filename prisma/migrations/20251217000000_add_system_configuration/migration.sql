@@ -1,5 +1,6 @@
 -- CreateTable
-CREATE TABLE "SystemConfiguration" (
+CREATE TABLE "SystemConfiguration"
+(
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL,

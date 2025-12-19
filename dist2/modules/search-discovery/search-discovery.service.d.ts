@@ -1,0 +1,32 @@
+import { PrismaService } from '../../config/prisma.service';
+import { ProductSearchDto, BulkSkuSearchDto, SearchSuggestionDto, ProductSearchResponseDto, BulkSkuSearchResponseDto, SearchSuggestionResponseDto, QuickSearchResponseDto, CreateSearchAnalyticsDto, SearchAnalyticsQueryDto, SearchAnalyticsResponseDto, CreateSavedSearchDto, UpdateSavedSearchDto, SavedSearchResponseDto, SavedSearchListDto, ExecuteSavedSearchDto } from './dto';
+export declare class SearchDiscoveryService {
+    private readonly prisma;
+    constructor(prisma: PrismaService);
+    searchProducts(searchDto: ProductSearchDto, userId?: string, sessionId?: string): Promise<ProductSearchResponseDto>;
+    quickSearch(query: string, limit?: number): Promise<QuickSearchResponseDto>;
+    bulkSkuSearch(bulkSearchDto: BulkSkuSearchDto, warehouseId?: string): Promise<BulkSkuSearchResponseDto>;
+    getSearchSuggestions(suggestionDto: SearchSuggestionDto): Promise<SearchSuggestionResponseDto>;
+    createSavedSearch(createDto: CreateSavedSearchDto, userId: string): Promise<SavedSearchResponseDto>;
+    getSavedSearches(userId: string): Promise<SavedSearchListDto>;
+    updateSavedSearch(searchId: string, updateDto: UpdateSavedSearchDto, userId: string): Promise<SavedSearchResponseDto>;
+    deleteSavedSearch(searchId: string, userId: string): Promise<void>;
+    executeSavedSearch(executeDto: ExecuteSavedSearchDto, userId: string): Promise<ProductSearchResponseDto>;
+    trackSearchAnalytics(analyticsDto: CreateSearchAnalyticsDto, userId?: string): Promise<void>;
+    getSearchAnalytics(queryDto: SearchAnalyticsQueryDto): Promise<SearchAnalyticsResponseDto>;
+    private buildSearchWhereClause;
+    private buildSearchOrderClause;
+    private buildSearchIncludeClause;
+    private mapToSearchProduct;
+    private buildAppliedFiltersArray;
+    private generateSearchSuggestions;
+    private generateDidYouMeanSuggestions;
+    private getAvailableFilters;
+    private getSearchVolume;
+    private getPopularSearchTerms;
+    private getZeroResultSearches;
+    private getCategoryAnalytics;
+    private getSearchPerformance;
+    private calculateSearchSummary;
+    private mapToSavedSearchResponse;
+}

@@ -1,0 +1,56 @@
+import { CartCheckoutService } from './cart-checkout.service';
+import { CheckoutService } from './checkout.service';
+import { SavedItemsService } from './saved-items.service';
+import { CreateCartDto, UpdateCartDto, CartResponseDto, CreateCartItemDto, UpdateCartItemDto, BulkAddToCartDto, CartItemResponseDto, MergeCartDto, QuoteToCartDto, CartValidationDto, CreateAddressDto, UpdateAddressDto, AddressResponseDto, AddressListDto, SetDefaultAddressDto, InitiateCheckoutDto, UpdateCheckoutShippingDto, UpdateCheckoutBillingDto, UpdateCheckoutPaymentDto, UpdateCheckoutNotesDto, SubmitCheckoutDto, ApproveCheckoutDto, CheckoutResponseDto, CheckoutFilterDto, CheckoutListDto, ApprovalRequirementDto, CreateSavedItemDto, UpdateSavedItemDto, SavedItemResponseDto, SavedItemsFilterDto, SavedItemsListDto, AddSavedItemToCartDto, BulkAddSavedItemsToCartDto } from './dto';
+export declare class CartCheckoutController {
+    private readonly cartCheckoutService;
+    private readonly checkoutService;
+    private readonly savedItemsService;
+    constructor(cartCheckoutService: CartCheckoutService, checkoutService: CheckoutService, savedItemsService: SavedItemsService);
+    createCart(createCartDto: CreateCartDto, sessionId?: string, req?: any): Promise<CartResponseDto>;
+    getUserCart(companyId?: string, sessionId?: string, headerSessionId?: string, req?: any): Promise<CartResponseDto>;
+    getCart(cartId: string, sessionId?: string, req?: any): Promise<CartResponseDto>;
+    updateCart(cartId: string, updateCartDto: UpdateCartDto, sessionId?: string, req?: any): Promise<CartResponseDto>;
+    clearCart(cartId: string, sessionId?: string, req?: any): Promise<void>;
+    mergeCart(guestCartId: string, userCartId: string, mergeDto: MergeCartDto): Promise<CartResponseDto>;
+    mergeGuestCartOnLogin(sessionId: string, req: any, companyId?: string): Promise<CartResponseDto>;
+    validateCart(cartId: string, sessionId?: string, req?: any): Promise<CartValidationDto>;
+    addItemToCart(cartId: string, createItemDto: CreateCartItemDto, sessionId?: string, req?: any): Promise<CartItemResponseDto>;
+    updateCartItem(itemId: string, updateItemDto: UpdateCartItemDto, sessionId?: string, req?: any): Promise<CartItemResponseDto>;
+    removeCartItem(itemId: string, sessionId?: string, req?: any): Promise<void>;
+    bulkAddToCart(cartId: string, bulkAddDto: BulkAddToCartDto, sessionId?: string, req?: any): Promise<CartItemResponseDto[]>;
+    addQuoteToCart(cartId: string, quoteToCartDto: QuoteToCartDto, req: any): Promise<CartItemResponseDto[]>;
+    createAddress(createAddressDto: CreateAddressDto, req: any): Promise<AddressResponseDto>;
+    getAddresses(companyId: string, req: any): Promise<AddressListDto>;
+    updateAddress(addressId: string, updateAddressDto: UpdateAddressDto, req: any): Promise<AddressResponseDto>;
+    deleteAddress(addressId: string, req: any): Promise<void>;
+    setDefaultAddress(addressId: string, setDefaultDto: SetDefaultAddressDto, req: any): Promise<AddressResponseDto>;
+    initiateCheckout(initiateDto: InitiateCheckoutDto, req: any): Promise<CheckoutResponseDto>;
+    getCheckout(checkoutId: string, req: any): Promise<CheckoutResponseDto>;
+    updateCheckoutShipping(checkoutId: string, shippingDto: UpdateCheckoutShippingDto, req: any): Promise<CheckoutResponseDto>;
+    updateCheckoutBilling(checkoutId: string, billingDto: UpdateCheckoutBillingDto, req: any): Promise<CheckoutResponseDto>;
+    updateCheckoutPayment(checkoutId: string, paymentDto: UpdateCheckoutPaymentDto, req: any): Promise<CheckoutResponseDto>;
+    updateCheckoutNotes(checkoutId: string, notesDto: UpdateCheckoutNotesDto, req: any): Promise<CheckoutResponseDto>;
+    submitCheckout(checkoutId: string, submitDto: SubmitCheckoutDto, req: any): Promise<CheckoutResponseDto>;
+    approveCheckout(checkoutId: string, approvalDto: ApproveCheckoutDto, req: any): Promise<CheckoutResponseDto>;
+    completeCheckout(checkoutId: string, req: any): Promise<CheckoutResponseDto>;
+    listCheckouts(filterDto: CheckoutFilterDto, req: any): Promise<CheckoutListDto>;
+    getApprovalRequirement(amount: string, companyId: string, req: any): Promise<ApprovalRequirementDto>;
+    createSavedItem(createDto: CreateSavedItemDto, req: any): Promise<SavedItemResponseDto>;
+    listSavedItems(filterDto: SavedItemsFilterDto, req: any): Promise<SavedItemsListDto>;
+    getSavedItem(itemId: string, req: any): Promise<SavedItemResponseDto>;
+    updateSavedItem(itemId: string, updateDto: UpdateSavedItemDto, req: any): Promise<SavedItemResponseDto>;
+    deleteSavedItem(itemId: string, req: any): Promise<void>;
+    addSavedItemToCart(itemId: string, cartId: string, addToCartDto: AddSavedItemToCartDto, req: any): Promise<any>;
+    bulkAddSavedItemsToCart(cartId: string, bulkAddDto: BulkAddSavedItemsToCartDto, req: any): Promise<any[]>;
+    healthCheck(): Promise<{
+        status: string;
+        timestamp: string;
+        services: {
+            cart: string;
+            checkout: string;
+            savedItems: string;
+            database: string;
+        };
+    }>;
+}

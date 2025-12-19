@@ -392,7 +392,6 @@ async function main() {
       state: 'CA',
       postalCode: '94105',
       country: 'USA',
-      taxId: 'TECH789123456',
       minimumOrderValue: 100.00,
       tin: 'TIN111222333',
       idType: 'BRN',

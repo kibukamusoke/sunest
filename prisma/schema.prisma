@@ -56,16 +56,22 @@ model User {
   addresses  Address[]
 
   // Order Management Relations
-  orders       Order[]
-  fulfillments Fulfillment[] // Orders assigned for picking
-  invoices     Invoice[]
-  orderEvents  OrderEvent[]
+  orders                Order[]
+  fulfillments          Fulfillment[] // Orders assigned for picking
+  invoices              Invoice[]
+  orderEvents           OrderEvent[]
+  productReviews        ProductReview[]
+  merchantReviewReplies ProductReview[] @relation("MerchantReviewReplies")
 
   // Notification Relations
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
   systemEvents            SystemEvent[]
   notificationRules       NotificationRule[]
+
+  // Support ticket relations
+  createdTickets  Ticket[] @relation("TicketCreatedBy")
+  assignedTickets Ticket[] @relation("TicketAssignedTo")
 
   // Analytics Relations
   dashboards             Dashboard[]
@@ -506,6 +512,7 @@ model Product {
 
   // Order Management Relations
   orderItems OrderItem[]
+  reviews    ProductReview[]
 
   // Audit fields
   createdBy String? // User ID who created
@@ -525,6 +532,51 @@ model Product {
   @@index([lastSearched])
   @@index([searchCount])
   @@map("products")
+}
+
+enum ProductReviewStatus {
+  PUBLISHED
+  HIDDEN
+}
+
+model ProductReview {
+  id String @id @default(uuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Optional link to a delivered order (proof of purchase)
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  rating Int
+  title  String?
+  body   String?
+
+  // Public URLs of uploaded photos (uploaded via Storage module)
+  photos String[]
+
+  // Merchant reply (optional)
+  merchantReply          String?
+  merchantReplyById      String?
+  merchantReplyBy        User?     @relation("MerchantReviewReplies", fields: [merchantReplyById], references: [id], onDelete: SetNull)
+  merchantRepliedAt      DateTime?
+  merchantReplyUpdatedAt DateTime?
+
+  status ProductReviewStatus @default(PUBLISHED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("product_reviews")
 }
 
 model ProductVariant {
@@ -1498,11 +1550,12 @@ model Order {
   creditTerms      String? // Net 30, etc.
 
   // Relations
-  items        OrderItem[]
-  fulfillments Fulfillment[]
-  shipments    Shipment[]
-  invoices     Invoice[]
-  orderEvents  OrderEvent[]
+  items          OrderItem[]
+  fulfillments   Fulfillment[]
+  shipments      Shipment[]
+  invoices       Invoice[]
+  orderEvents    OrderEvent[]
+  productReviews ProductReview[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -2865,4 +2918,74 @@ enum DocumentStatus {
   REJECTED // Document rejected
   EXPIRED // Document has expired
   RESUBMISSION // Requires resubmission
+}
+
+// ==================== SUPPORT TICKETS ====================
+
+model Ticket {
+  id String @id @default(uuid())
+
+  ticketNumber String         @unique
+  publicToken  String         @unique
+  status       TicketStatus   @default(OPEN)
+  priority     TicketPriority @default(NORMAL)
+
+  subject String
+  message String
+
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  orderNumber   String?
+
+  createdById String?
+  createdBy   User?   @relation("TicketCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  assignedToId String?
+  assignedTo   User?   @relation("TicketAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  messages TicketMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([createdById])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id String @id @default(uuid())
+
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  authorType TicketMessageAuthorType
+  message    String
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([createdAt])
+  @@map("ticket_messages")
+}
+
+enum TicketMessageAuthorType {
+  CUSTOMER
+  SUPPORT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }

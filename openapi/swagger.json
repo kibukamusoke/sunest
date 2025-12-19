@@ -4892,6 +4892,56 @@
         ]
       }
     },
+    "/api/products/admin/{productId}": {
+      "get": {
+        "description": "Retrieve a specific product by its ID. System admin endpoint - returns products in any status except DELETED.",
+        "operationId": "ProductCatalogController_getAdminProductById",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "Product ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeVariants",
+            "required": false,
+            "in": "query",
+            "description": "Include product variants",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get product by ID (Admin)",
+        "tags": [
+          "Product Catalog"
+        ]
+      }
+    },
     "/api/products/{productId}": {
       "get": {
         "description": "Retrieve a specific product by its ID. Public endpoint - only shows published products.",
@@ -13392,6 +13442,575 @@
         "summary": "Update system configurations",
         "tags": [
           "SystemConfigurations"
+        ]
+      }
+    },
+    "/api/tickets/public/{token}": {
+      "get": {
+        "operationId": "TicketsController_getPublicByToken",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicTicketResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get ticket details (public link)",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/api/tickets/public/{token}/messages": {
+      "post": {
+        "operationId": "TicketsController_addPublicMessage",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTicketMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicTicketResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Add a message to a ticket (public link)",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/api/tickets/{id}/messages": {
+      "post": {
+        "operationId": "TicketsController_addAdminMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupportTicketMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicTicketResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Add a support message to a ticket (admin)",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/api/tickets": {
+      "post": {
+        "description": "Create a support ticket from the storefront Contact Us / Support page.",
+        "operationId": "TicketsController_createPublic",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTicketDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ticket created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a support ticket (public)",
+        "tags": [
+          "Tickets"
+        ]
+      },
+      "get": {
+        "description": "List all support tickets (system admin only).",
+        "operationId": "TicketsController_listAdmin",
+        "parameters": [
+          {
+            "name": "skip",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "take",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketsListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List tickets (admin)",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/api/tickets/{id}": {
+      "get": {
+        "operationId": "TicketsController_getAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get ticket by id (admin)",
+        "tags": [
+          "Tickets"
+        ]
+      },
+      "patch": {
+        "operationId": "TicketsController_updateAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTicketDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update ticket (admin)",
+        "tags": [
+          "Tickets"
+        ]
+      }
+    },
+    "/api/products/{productId}/reviews": {
+      "get": {
+        "operationId": "ProductReviewsController_listReviews",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "Product ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReviewListDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List published reviews for a product (Public)",
+        "tags": [
+          "Product Reviews"
+        ]
+      },
+      "post": {
+        "operationId": "ProductReviewsController_createOrUpdate",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "Product ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateProductReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReviewResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create or update a review for a product (Delivered purchase required)",
+        "tags": [
+          "Product Reviews"
+        ]
+      }
+    },
+    "/api/products/{productId}/reviews/summary": {
+      "get": {
+        "operationId": "ProductReviewsController_getSummary",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "Product ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReviewSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get review summary for a product (Public)",
+        "tags": [
+          "Product Reviews"
+        ]
+      }
+    },
+    "/api/products/{productId}/reviews/eligibility": {
+      "get": {
+        "operationId": "ProductReviewsController_getEligibility",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "Product ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReviewEligibilityResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check if the current user can review this product (Delivered purchase required)",
+        "tags": [
+          "Product Reviews"
+        ]
+      }
+    },
+    "/api/products/{productId}/reviews/me": {
+      "get": {
+        "operationId": "ProductReviewsController_getMyReview",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "Product ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReviewResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the current user’s review for this product (if any)",
+        "tags": [
+          "Product Reviews"
+        ]
+      }
+    },
+    "/api/merchants/reviews": {
+      "get": {
+        "operationId": "MerchantProductReviewsController_listMerchantReviews",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "unrepliedOnly",
+            "required": false,
+            "in": "query",
+            "description": "If true, only return reviews without a merchant reply",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MerchantProductReviewListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List customer reviews for the merchant’s products",
+        "tags": [
+          "Merchant Reviews"
+        ]
+      }
+    },
+    "/api/merchants/reviews/{reviewId}/reply": {
+      "post": {
+        "operationId": "MerchantProductReviewsController_replyToReview",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "required": true,
+            "in": "path",
+            "description": "Review ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MerchantReplyToReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MerchantProductReviewResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reply to a customer review (merchant only)",
+        "tags": [
+          "Merchant Reviews"
         ]
       }
     }
@@ -28514,30 +29133,746 @@
         "type": "object",
         "properties": {
           "whatsappNumber": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "WhatsApp number (E.164 preferred).",
             "example": "+60123456789"
           },
           "applicationName": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Application name shown in the storefront.",
             "example": "Intelibuy"
           },
           "phoneNumber": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Primary phone number shown in the storefront.",
             "example": "+60-123456789"
           },
           "emailAddress": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Primary email address shown in the storefront.",
             "example": "sales@intelibuy.com"
+          },
+          "siteUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical site URL used for building links (ticket links, share links, etc).",
+            "example": "https://www.intelibuy.my"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Business address shown in the storefront (footer, contact pages). Can be multi-line.",
+            "example": "Lot 56, Jalan Gasing 2\nPetaling Jaya, Selangor, Malaysia"
+          },
+          "businessHours": {
+            "type": "string",
+            "nullable": true,
+            "description": "Business hours shown in the storefront. Can be multi-line.",
+            "example": "Mon-Fri: 8:00 AM - 6:00 PM\nSat: 9:00 AM - 4:00 PM\nSun: Closed"
+          },
+          "homeBannerImages": {
+            "nullable": true,
+            "description": "Home page banner image URLs (ordered). These power the home page carousel.",
+            "example": [
+              "https://my-bucket.s3.ap-southeast-1.amazonaws.com/1700000000000-abc123.jpg",
+              "https://my-bucket.s3.ap-southeast-1.amazonaws.com/1700000000001-def456.jpg"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "facebookUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Facebook page URL shown in the storefront footer.",
+            "example": "https://www.facebook.com/yourpage"
+          },
+          "twitterUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Twitter/X profile URL shown in the storefront footer.",
+            "example": "https://x.com/yourhandle"
+          },
+          "instagramUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Instagram profile URL shown in the storefront footer.",
+            "example": "https://www.instagram.com/yourhandle"
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "LinkedIn page URL shown in the storefront footer.",
+            "example": "https://www.linkedin.com/company/yourcompany"
+          },
+          "privacyPolicyHtml": {
+            "type": "string",
+            "nullable": true,
+            "description": "Privacy policy rich text (HTML).",
+            "example": "<h1>Privacy Policy</h1><p>...</p>"
+          },
+          "returnsPolicyHtml": {
+            "type": "string",
+            "nullable": true,
+            "description": "Returns policy rich text (HTML).",
+            "example": "<h1>Returns Policy</h1><p>...</p>"
+          },
+          "termsAndConditionsHtml": {
+            "type": "string",
+            "nullable": true,
+            "description": "Terms and conditions rich text (HTML).",
+            "example": "<h1>Terms &amp; Conditions</h1><p>...</p>"
           }
         }
       },
       "UpdateSystemConfigurationsDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "whatsappNumber": {
+            "type": "string",
+            "description": "WhatsApp number (E.164 preferred).",
+            "example": "+60123456789"
+          },
+          "applicationName": {
+            "type": "string",
+            "description": "Application name shown in the storefront.",
+            "example": "Intelibuy"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Primary phone number shown in the storefront.",
+            "example": "+60-123456789"
+          },
+          "emailAddress": {
+            "type": "string",
+            "description": "Primary email address shown in the storefront.",
+            "example": "sales@intelibuy.com"
+          },
+          "siteUrl": {
+            "type": "string",
+            "description": "Canonical site URL used for building links (ticket links, share links, etc).",
+            "example": "https://www.intelibuy.my"
+          },
+          "address": {
+            "type": "string",
+            "description": "Business address shown in the storefront (footer, contact pages). Can be multi-line.",
+            "example": "Lot 56, Jalan Gasing 2\nPetaling Jaya, Selangor, Malaysia"
+          },
+          "businessHours": {
+            "type": "string",
+            "description": "Business hours shown in the storefront. Can be multi-line.",
+            "example": "Mon-Fri: 8:00 AM - 6:00 PM\nSat: 9:00 AM - 4:00 PM\nSun: Closed"
+          },
+          "homeBannerImages": {
+            "description": "Home page banner image URLs (ordered). These power the home page carousel.",
+            "example": [
+              "https://my-bucket.s3.ap-southeast-1.amazonaws.com/1700000000000-abc123.jpg",
+              "https://my-bucket.s3.ap-southeast-1.amazonaws.com/1700000000001-def456.jpg"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "facebookUrl": {
+            "type": "string",
+            "description": "Facebook page URL shown in the storefront footer.",
+            "example": "https://www.facebook.com/yourpage"
+          },
+          "twitterUrl": {
+            "type": "string",
+            "description": "Twitter/X profile URL shown in the storefront footer.",
+            "example": "https://x.com/yourhandle"
+          },
+          "instagramUrl": {
+            "type": "string",
+            "description": "Instagram profile URL shown in the storefront footer.",
+            "example": "https://www.instagram.com/yourhandle"
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "description": "LinkedIn page URL shown in the storefront footer.",
+            "example": "https://www.linkedin.com/company/yourcompany"
+          },
+          "privacyPolicyHtml": {
+            "type": "string",
+            "description": "Privacy policy rich text (HTML).",
+            "example": "<h1>Privacy Policy</h1><p>...</p>"
+          },
+          "returnsPolicyHtml": {
+            "type": "string",
+            "description": "Returns policy rich text (HTML).",
+            "example": "<h1>Returns Policy</h1><p>...</p>"
+          },
+          "termsAndConditionsHtml": {
+            "type": "string",
+            "description": "Terms and conditions rich text (HTML).",
+            "example": "<h1>Terms &amp; Conditions</h1><p>...</p>"
+          }
+        }
+      },
+      "TicketMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "authorType": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "SUPPORT"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "authorType",
+          "message",
+          "createdAt"
+        ]
+      },
+      "PublicTicketResponseDto": {
+        "type": "object",
+        "properties": {
+          "ticketNumber": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED"
+            ]
+          },
+          "subject": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketMessageResponseDto"
+            }
+          }
+        },
+        "required": [
+          "ticketNumber",
+          "status",
+          "subject",
+          "createdAt",
+          "updatedAt",
+          "messages"
+        ]
+      },
+      "CreateTicketMessageDto": {
+        "type": "object",
+        "properties": {
+          "customerEmail": {
+            "type": "string",
+            "description": "Customer email used to verify ownership",
+            "example": "jane@example.com"
+          },
+          "message": {
+            "type": "string",
+            "description": "Additional information / reply",
+            "example": "Here are more details..."
+          }
+        },
+        "required": [
+          "customerEmail",
+          "message"
+        ]
+      },
+      "CreateSupportTicketMessageDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Support reply message",
+            "example": "Thanks! Can you share a photo of the label?"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "CreateTicketDto": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "Ticket subject",
+            "example": "Need help with an order"
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed message describing the issue/request",
+            "example": "My order HW-2024-000123 arrived with missing items..."
+          },
+          "customerName": {
+            "type": "string",
+            "description": "Customer name",
+            "example": "Jane Doe"
+          },
+          "customerEmail": {
+            "type": "string",
+            "description": "Customer email",
+            "example": "jane@example.com"
+          },
+          "customerPhone": {
+            "type": "string",
+            "description": "Customer phone number",
+            "example": "+60-12-3456789"
+          },
+          "orderNumber": {
+            "type": "string",
+            "description": "Related order number",
+            "example": "HW-2024-000123"
+          }
+        },
+        "required": [
+          "subject",
+          "message"
+        ]
+      },
+      "TicketResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ticketNumber": {
+            "type": "string",
+            "example": "TCK-20251217-1A2B3C"
+          },
+          "publicToken": {
+            "type": "string",
+            "description": "Public token used to view/respond to the ticket without authentication (shared via email link)."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "NORMAL",
+              "HIGH",
+              "URGENT"
+            ]
+          },
+          "subject": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "object"
+          },
+          "customerEmail": {
+            "type": "object"
+          },
+          "customerPhone": {
+            "type": "object"
+          },
+          "orderNumber": {
+            "type": "object"
+          },
+          "createdById": {
+            "type": "object"
+          },
+          "assignedToId": {
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ticketNumber",
+          "publicToken",
+          "status",
+          "priority",
+          "subject",
+          "message",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "TicketsListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 123
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ]
+      },
+      "UpdateTicketDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "NORMAL",
+              "HIGH",
+              "URGENT"
+            ]
+          },
+          "assignedToId": {
+            "type": "object",
+            "description": "Assign ticket to a user (admin)",
+            "example": "uuid"
+          }
+        }
+      },
+      "ProductReviewAuthorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User ID of the review author"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name (best-effort)"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Avatar/profile picture URL (best-effort)"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ProductReviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "photos": {
+            "description": "Public URLs of review photos",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "author": {
+            "$ref": "#/components/schemas/ProductReviewAuthorDto"
+          },
+          "merchantReply": {
+            "type": "string",
+            "description": "Optional merchant reply text (visible to customers)"
+          },
+          "merchantRepliedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the merchant replied"
+          },
+          "merchantReplyUpdatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the merchant last updated their reply"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "rating",
+          "photos",
+          "author",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProductReviewListDto": {
+        "type": "object",
+        "properties": {
+          "reviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductReviewResponseDto"
+            }
+          },
+          "pagination": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "reviews",
+          "pagination"
+        ]
+      },
+      "ProductReviewSummaryDto": {
+        "type": "object",
+        "properties": {
+          "averageRating": {
+            "type": "number",
+            "description": "Average rating across published reviews"
+          },
+          "totalReviews": {
+            "type": "number",
+            "description": "Total number of published reviews"
+          },
+          "ratingCounts": {
+            "type": "object",
+            "description": "Count of reviews by star rating (1..5)",
+            "example": {
+              "1": 2,
+              "2": 0,
+              "3": 5,
+              "4": 10,
+              "5": 30
+            }
+          }
+        },
+        "required": [
+          "averageRating",
+          "totalReviews",
+          "ratingCounts"
+        ]
+      },
+      "ProductReviewEligibilityResponseDto": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "existingReviewId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "eligible"
+        ]
+      },
+      "CreateOrUpdateProductReviewDto": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Optional uploaded file IDs (from Storage module) to attach as review photos",
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "rating"
+        ]
+      },
+      "MerchantProductMiniDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Primary image URL if available"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "MerchantProductReviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "photos": {
+            "description": "Public URLs of review photos",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "author": {
+            "$ref": "#/components/schemas/ProductReviewAuthorDto"
+          },
+          "merchantReply": {
+            "type": "string",
+            "description": "Optional merchant reply text (visible to customers)"
+          },
+          "merchantRepliedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the merchant replied"
+          },
+          "merchantReplyUpdatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the merchant last updated their reply"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/MerchantProductMiniDto"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "rating",
+          "photos",
+          "author",
+          "createdAt",
+          "updatedAt",
+          "product"
+        ]
+      },
+      "MerchantProductReviewListDto": {
+        "type": "object",
+        "properties": {
+          "reviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MerchantProductReviewResponseDto"
+            }
+          },
+          "pagination": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "reviews",
+          "pagination"
+        ]
+      },
+      "MerchantReplyToReviewDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "description": "Merchant reply text"
+          }
+        },
+        "required": [
+          "body"
+        ]
       }
     }
   }

@@ -22,6 +22,8 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ConfigurationsModule } from './modules/configurations/configurations.module';
 import { PlacesModule } from './modules/places/places.module';
 import { SystemConfigurationsModule } from './modules/system-configurations/system-configurations.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
+import { ProductReviewsModule } from './modules/product-reviews/product-reviews.module';
 import { LoggerModule } from 'nestjs-pino';
 
 @Module({
@@ -86,8 +88,10 @@ import { LoggerModule } from 'nestjs-pino';
     ConfigurationsModule,
     PlacesModule,
     SystemConfigurationsModule,
+    TicketsModule,
+    ProductReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

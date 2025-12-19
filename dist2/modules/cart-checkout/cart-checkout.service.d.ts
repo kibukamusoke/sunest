@@ -1,0 +1,36 @@
+import { PrismaService } from '../../config/prisma.service';
+import { NotificationService } from '../notifications/notification.service';
+import { CreateCartDto, UpdateCartDto, CartResponseDto, CreateCartItemDto, UpdateCartItemDto, BulkAddToCartDto, CartItemResponseDto, MergeCartDto, QuoteToCartDto, CartValidationDto, CreateAddressDto, UpdateAddressDto, AddressResponseDto, AddressListDto, SetDefaultAddressDto } from './dto';
+export declare class CartCheckoutService {
+    private readonly prisma;
+    private readonly notificationService;
+    private readonly logger;
+    constructor(prisma: PrismaService, notificationService: NotificationService);
+    createCart(createCartDto: CreateCartDto, userId?: string): Promise<CartResponseDto>;
+    getCart(cartId: string, userId?: string): Promise<CartResponseDto>;
+    getUserCart(userId?: string, companyId?: string, sessionId?: string): Promise<CartResponseDto>;
+    updateCart(cartId: string, updateCartDto: UpdateCartDto, userId?: string): Promise<CartResponseDto>;
+    clearCart(cartId: string, userId?: string): Promise<void>;
+    getGuestCartBySessionId(sessionId: string): Promise<CartResponseDto | null>;
+    mergeCart(guestCartId: string, userCartId: string, mergeDto: MergeCartDto): Promise<CartResponseDto>;
+    mergeGuestCartOnLogin(sessionId: string, userId: string, companyId?: string): Promise<CartResponseDto>;
+    addItemToCart(cartId: string, createItemDto: CreateCartItemDto, userId?: string): Promise<CartItemResponseDto>;
+    updateCartItem(itemId: string, updateItemDto: UpdateCartItemDto, userId?: string): Promise<CartItemResponseDto>;
+    removeCartItem(itemId: string, userId?: string): Promise<void>;
+    bulkAddToCart(cartId: string, bulkAddDto: BulkAddToCartDto, userId?: string): Promise<CartItemResponseDto[]>;
+    addQuoteToCart(cartId: string, quoteToCartDto: QuoteToCartDto, userId: string): Promise<CartItemResponseDto[]>;
+    validateCart(cartId: string, userId?: string): Promise<CartValidationDto>;
+    createAddress(createAddressDto: CreateAddressDto, userId: string): Promise<AddressResponseDto>;
+    updateAddress(addressId: string, updateAddressDto: UpdateAddressDto, userId: string): Promise<AddressResponseDto>;
+    getAddresses(userId: string, companyId?: string): Promise<AddressListDto>;
+    deleteAddress(addressId: string, userId: string): Promise<void>;
+    setDefaultAddress(addressId: string, setDefaultDto: SetDefaultAddressDto, userId: string): Promise<AddressResponseDto>;
+    private getCartIncludeOptions;
+    private getCartItemIncludeOptions;
+    private mapCartToResponseDto;
+    private mapCartItemToResponseDto;
+    private mapAddressToResponseDto;
+    private calculateCartSummary;
+    private calculateItemAvailability;
+    private formatAddress;
+}
